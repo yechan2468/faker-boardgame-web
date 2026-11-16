@@ -33,7 +33,7 @@ export function useGameTimers({ gameStatus, currentTurnId, viewerId, turnNumber,
   }, [gameStatus, currentTurnId, turnNumber, viewerId])
 
   const timedPhase = gameStatus === 'IN_GAME'
-    && ['SUSPICION', 'DEFENSE', 'DEFENSE_SUSPICION'].includes(phase ?? '')
+    && ['SUSPICION', 'DEFENSE', 'DEFENSE_SUSPICION', 'RESOLVED'].includes(phase ?? '')
     ? phase ?? null
     : null
   const [elapsedPhaseSeconds, setElapsedPhaseSeconds] = useState(0)

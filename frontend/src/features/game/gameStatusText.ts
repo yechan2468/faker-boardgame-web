@@ -33,8 +33,8 @@ export function getGameStatusText({
     && game.turn.activePlayerId === attackResolutionNotice.actorId
     && game.turn.number === attackResolutionNotice.turnNumber
     ? attackResolutionNotice.truthful
-      ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
-      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다.\n선언한 카드의 능력은 무효화됩니다.`
+      ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력을 2 💔💔 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
+      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력을 2 💔💔 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력을 2 ❤️❤️ 얻습니다.\n선언한 카드의 능력은 무효화됩니다.`
     : null
   const defenseOutcomeStatus = defenseOutcomeNotice
     && game
@@ -61,7 +61,7 @@ export function getGameStatusText({
     && game.turn.phase === 'RESOLVED'
     && game.turn.activePlayerId === alchemistResolutionNotice.actorId
     && game.turn.number === alchemistResolutionNotice.turnNumber
-    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력 토큰 1개를 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환되었습니다.`
+    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력을 1 ❤️ 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환되었습니다.`
     : null
   const defenseResolutionStatus = defenseResolutionNotice
     && game?.status === 'IN_GAME'
@@ -69,8 +69,8 @@ export function getGameStatusText({
     && game.turn.activePlayerId === defenseResolutionNotice.actorId
     && game.turn.number === defenseResolutionNotice.turnNumber
     ? defenseResolutionNotice.truthful
-      ? `잘못 의심한 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님의 방어 카드 능력이 그대로 적용됩니다.`
-      : `거짓이 발각되어 ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 방어 카드의 능력은 무효화됩니다.`
+      ? `잘못 의심한 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력을 2 💔💔 잃고, ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님의 방어 카드 능력이 그대로 적용됩니다.`
+      : `거짓이 발각되어 ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님이 체력을 2 💔💔 잃고 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력을 2 ❤️❤️ 얻습니다. 방어 카드의 능력은 무효화됩니다.`
     : null
 
   return defenseOutcomeStatus
@@ -83,8 +83,8 @@ export function getGameStatusText({
         ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
         : game.turn.phase === 'DEFENSE'
           ? mustDefend && game.pendingAction
-            ? `${getPlayerName(game.players, game.pendingAction.actorId)} 님의 공격을 받았습니다. 방어를 선택하세요. (${elapsedPhase})`
-            : `공격 대상들이 방어를 선택하는 중입니다. (${elapsedPhase})`
+            ? `${getPlayerName(game.players, game.pendingAction.actorId)} 님의 공격을 받았습니다. 방어🛡️⮎를 선택하세요. (${elapsedPhase})`
+            : `공격 대상들이 방어🛡️⮎를 선택하는 중입니다. (${elapsedPhase})`
           : game.turn.phase === 'SUSPICION'
             ? `의심을 진행 중입니다. (${elapsedPhase})`
             : game.turn.phase === 'DEFENSE_SUSPICION'

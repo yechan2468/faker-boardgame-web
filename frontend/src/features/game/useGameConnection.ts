@@ -140,21 +140,29 @@ export function useGameConnection({
           if (payload.type === 'DEFENSE_SUBMITTED') setDefenseResolutionNotice(null)
           if (payload.type === 'BLUFF_SUBMITTED' && pendingAction) {
             setDefenseOutcomeNotice(null)
-            setDeclarationNotice({
+            setDeclarationNotice((previous) => ({
               playerId: pendingAction.actorId,
               declaredCardId: pendingAction.declaredCardId,
               truthful: pendingAction.attackerTruthful,
+              actualCardId: previous?.playerId === pendingAction.actorId
+                && previous.declaredCardId === pendingAction.declaredCardId
+                ? previous.actualCardId
+                : pendingAction.attackerActualCardId,
               targetIds: pendingAction.targetIds,
-            })
+            }))
           }
           if (payload.type === 'DEFENSE_SUBMITTED' && pendingAction?.defenses.length) {
             const defense = pendingAction.defenses[pendingAction.defenses.length - 1]
-            setDeclarationNotice({
+            setDeclarationNotice((previous) => ({
               playerId: defense.playerId,
               declaredCardId: defense.declaredCardId,
               truthful: defense.truthful,
+              actualCardId: previous?.playerId === defense.playerId
+                && previous.declaredCardId === defense.declaredCardId
+                ? previous.actualCardId
+                : defense.actualCardId,
               targetIds: [],
-            })
+            }))
           }
           if (typeof payload.truthful === 'boolean' && typeof payload.declaredCardId === 'string') {
             const playerId = typeof payload.defenseIndex === 'number' && payload.defenseIndex >= 0

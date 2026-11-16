@@ -65,6 +65,7 @@ export type GameScreenProps = {
   modalOpen: boolean
   errorMessage: string | null
   statusText: string
+  waitingForTurnEnd: boolean
   turnIntro: boolean
   turnOverlayText: string
   currentTurnId: string | null

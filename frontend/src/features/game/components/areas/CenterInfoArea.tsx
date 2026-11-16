@@ -30,6 +30,7 @@ export function CenterInfoArea({
   self,
   errorMessage,
   statusText,
+  waitingForTurnEnd,
   turnIntro,
   displayedDeclaration,
   displayedDeclarationLabel,
@@ -96,6 +97,13 @@ export function CenterInfoArea({
     }
   }
   const visibleCard = visibleCardId ? getCard(visibleCardId) : null
+  const actualCardName = displayedDeclaration?.truthful === false
+    ? displayedDeclaration.actualCardId && displayedDeclaration.actualCardId !== displayedDeclaration.declaredCardId
+      ? getCard(displayedDeclaration.actualCardId).ko
+      : visibleCard && visibleCard.id !== displayedDeclaration.declaredCardId
+        ? visibleCard.ko
+        : null
+    : null
 
   return (
     <>
@@ -108,11 +116,11 @@ export function CenterInfoArea({
           </Supply>
           <DeclarationPanel>
             <DeclarationText>
-              {displayedDeclarationLabel ? displayedDeclarationLabel : '아직 카드 선언이 되지 않았습니다.'}
+              {displayedDeclarationLabel ?? '아직 카드 선언이 되지 않았습니다.'}
             </DeclarationText>
             {displayedDeclaration && displayedCard && displayedDeclaration.truthful !== null && (
               <VerdictText $truthful={displayedDeclaration.truthful}>
-                {displayedDeclarationLabel}은 {displayedDeclaration.truthful ? '진실' : '거짓'}이었습니다.
+                {displayedDeclarationLabel}은 {displayedDeclaration.truthful ? '진실' : '거짓'}이었습니다.<br/>{actualCardName ? `(실제: ${actualCardName})` : ''}
               </VerdictText>
             )}
             <DeclaredCard
@@ -139,7 +147,13 @@ export function CenterInfoArea({
             <DeckCount>{game.cardDeckCount}</DeckCount>
           </Deck>
         </TableState>
-        <Status data-error={Boolean(errorMessage)}>{statusText}</Status>
+        <Status
+          data-error={Boolean(errorMessage)}
+          data-has-personal-timer={!errorMessage && /\((?:\d+|\d{2}:\d{2})\)$/.test(statusText)}
+          data-waiting-turn-end={waitingForTurnEnd}
+        >
+          {statusText}
+        </Status>
         {game.status === 'LOBBY' && self?.role === 'HOST' && (
           game.matchResult ? (
             <GameActionButtons>

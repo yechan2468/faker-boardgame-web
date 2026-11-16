@@ -307,6 +307,14 @@ export const DeclaredCardEnglish = styled.div`
   font-size: 0.64rem;
   font-weight: 800;
 `
+const delayedWaitingStatusFade = keyframes`
+  from { opacity: 0; }
+  to { opacity: 1; }
+`
+const personalTimerStatusPulse = keyframes`
+  0%, 100% { opacity: 1; filter: blur(0); }
+  50% { opacity: 0.62; filter: blur(0.45px); }
+`
 export const Status = styled.div`
   min-height: 1.8rem;
   color: #fff;
@@ -314,6 +322,21 @@ export const Status = styled.div`
   font-weight: 650;
   text-align: center;
   &[data-error='true'] { color: #bcefff; }
+  &[data-has-personal-timer='true'] {
+    animation: ${personalTimerStatusPulse} 2.4s ease-in-out infinite;
+  }
+  &[data-waiting-turn-end='true'] {
+    opacity: 0;
+    animation: ${delayedWaitingStatusFade} 1s ease 2s both,
+      ${personalTimerStatusPulse} 2.4s ease-in-out 3s infinite;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &[data-waiting-turn-end='true'], &[data-has-personal-timer='true'] {
+      opacity: 1;
+      filter: none;
+      animation: none;
+    }
+  }
 `
 export const RefreshButton = styled.button`
   display: inline-block;

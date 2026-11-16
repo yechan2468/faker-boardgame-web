@@ -4,7 +4,7 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
 import { animatePlayedCard } from './components/animations/cardAnimations'
 import type { GameEffect } from './audio/GameAudioProvider'
-import type { CardInfo } from './gameUi'
+import type { CardInfo, DeclarationNotice } from './gameUi'
 
 type GameActionsOptions = {
   game: GameState | undefined
@@ -24,6 +24,7 @@ type GameActionsOptions = {
   setHostActionPending: Dispatch<SetStateAction<boolean>>
   setSelectedHandIndex: Dispatch<SetStateAction<number | null>>
   setSelectedDeclarationId: Dispatch<SetStateAction<string | null>>
+  setDeclarationNotice: Dispatch<SetStateAction<DeclarationNotice | null>>
   setTargetId: Dispatch<SetStateAction<string | null>>
   setSelectedDefenseType: Dispatch<SetStateAction<'defender' | 'wizard' | null>>
   setRedirectTargetId: Dispatch<SetStateAction<string | null>>
@@ -56,6 +57,7 @@ export function createGameActions({
   setHostActionPending,
   setSelectedHandIndex,
   setSelectedDeclarationId,
+  setDeclarationNotice,
   setTargetId,
   setSelectedDefenseType,
   setRedirectTargetId,
@@ -145,6 +147,15 @@ export function createGameActions({
     playSound('bluffSubmit')
     playSound('submitCard')
     if (clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
+    if (clientRef.current?.connected && self) {
+      setDeclarationNotice({
+        playerId: self.id,
+        declaredCardId: selectedDeclaration.id,
+        truthful: null,
+        actualCardId: selectedCard.id,
+        targetIds: targetId ? [targetId] : [],
+      })
+    }
     publish('/app/game/bluff/submit', {
       actualCardId: selectedCard.id,
       declaredCardId: selectedDeclaration.id,
@@ -163,6 +174,15 @@ export function createGameActions({
     }
     playSound('submitCard')
     if (selectedHandIndex !== null && clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
+    if (clientRef.current?.connected && self) {
+      setDeclarationNotice({
+        playerId: self.id,
+        declaredCardId: selectedDefenseType,
+        truthful: null,
+        actualCardId: selectedCard.id,
+        targetIds: [],
+      })
+    }
     publish('/app/game/card/defend', {
       actualCardId: selectedCard.id,
       declaredCardId: selectedDefenseType,

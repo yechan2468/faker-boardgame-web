@@ -154,7 +154,7 @@ export function useGameController(): GameControllerResult {
   )
   const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
   const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
-  const statusText = getGameStatusText({
+  const defaultStatusText = getGameStatusText({
     game,
     isMyTurn,
     mustDefend,
@@ -186,6 +186,7 @@ export function useGameController(): GameControllerResult {
     setHostActionPending,
     setSelectedHandIndex,
     setSelectedDeclarationId,
+    setDeclarationNotice,
     setTargetId,
     setSelectedDefenseType,
     setRedirectTargetId,
@@ -244,6 +245,13 @@ export function useGameController(): GameControllerResult {
           ? ` (대상: ${displayedDeclaration.targetIds.map((playerId) => getPlayerName(game?.players ?? [], playerId)).join(', ')})`
           : ''}`
     : null
+  const waitingForTurnEnd = game?.status === 'IN_GAME'
+    && game.turn.phase === 'RESOLVED'
+    && !isMyTurn
+    && (displayedDeclaration?.truthful === true || displayedDeclaration?.truthful === false)
+  const statusText = waitingForTurnEnd
+    ? `${activeTurnName ?? '상대'} 님의 턴 종료를 기다리는 중... (${elapsedPhase})`
+    : defaultStatusText
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
     const wins = new Map((leaderboardQuery.data ?? []).map((entry) => [entry.playerId, entry.wins]))
@@ -304,6 +312,7 @@ export function useGameController(): GameControllerResult {
       modalOpen,
       errorMessage,
       statusText,
+      waitingForTurnEnd,
       turnIntro,
       turnOverlayText,
       currentTurnId,
