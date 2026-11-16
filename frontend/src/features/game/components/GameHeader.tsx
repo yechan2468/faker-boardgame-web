@@ -16,7 +16,7 @@ export function GameHeader({
 }) {
   return (
     <TopBar>
-      <Brand>Faker Blue</Brand>
+      <Brand>Faker</Brand>
       <OpponentArea
         game={game}
         opponents={opponents}

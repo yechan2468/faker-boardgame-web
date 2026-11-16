@@ -1,4 +1,4 @@
-# Faker Blue frontend
+# Faker frontend
 
 React and TypeScript application built with Vite. Styling uses styled-components, and server state uses TanStack Query.
 

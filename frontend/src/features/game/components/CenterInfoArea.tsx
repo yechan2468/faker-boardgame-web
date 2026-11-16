@@ -51,13 +51,13 @@ export function CenterInfoArea({
                 {displayedDeclarationLabel}은 {displayedDeclaration.truthful ? '진실' : '거짓'}이었습니다.
               </VerdictText>
             )}
-            <DeclaredCard $truthful={displayedDeclaration?.truthful ?? null}>
+            <DeclaredCard data-declared-card="true" $truthful={displayedDeclaration?.truthful ?? null}>
               {displayedCard && <CardMascot cardId={displayedCard.id} />}
               <DeclaredCardName>{displayedCard?.ko ?? '선언 대기'}</DeclaredCardName>
               <DeclaredCardEnglish>{displayedCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>
           </DeclarationPanel>
-          <Deck>
+          <Deck data-deck-source="true">
             <span>남은 카드</span>
             <DeckCount>{game.cardDeckCount}</DeckCount>
           </Deck>

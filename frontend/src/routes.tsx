@@ -109,7 +109,7 @@ function LoginPage() {
   return (
     <Page>
       <Card>
-        <Eyebrow>Faker Blue</Eyebrow>
+        <Eyebrow>Faker</Eyebrow>
         <h1>게임 입장</h1>
         <Description>호스트가 알려준 비밀번호와 사용할 닉네임을 입력해 주세요.</Description>
         {session.isError ? (
@@ -153,7 +153,7 @@ function HostLogin() {
       await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/admin', { replace: true })
     } catch (reason) { setError(reason instanceof Error ? reason.message : '로그인할 수 없습니다.') } finally { setSubmitting(false) }
   }
-  return <Page><Card><Eyebrow>Faker Blue · Host</Eyebrow><h1>호스트 로그인</h1><Description>호스트 계정으로 로그인한 뒤 게스트 비밀번호를 설정해 주세요.</Description>{error && <Notice $error>{error}</Notice>}<Form onSubmit={submit}><label htmlFor="host-username">아이디</label><input id="host-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required /><label htmlFor="host-password">비밀번호</label><input id="host-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><Button disabled={submitting}>{submitting ? '로그인 중...' : '로그인'}</Button></Form><LinkButton onClick={() => navigate('/login')}>게스트 입장</LinkButton></Card></Page>
+  return <Page><Card><Eyebrow>Faker · Host</Eyebrow><h1>호스트 로그인</h1><Description>호스트 계정으로 로그인한 뒤 게스트 비밀번호를 설정해 주세요.</Description>{error && <Notice $error>{error}</Notice>}<Form onSubmit={submit}><label htmlFor="host-username">아이디</label><input id="host-username" value={username} onChange={(event) => setUsername(event.target.value)} autoComplete="username" required /><label htmlFor="host-password">비밀번호</label><input id="host-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><Button disabled={submitting}>{submitting ? '로그인 중...' : '로그인'}</Button></Form><LinkButton onClick={() => navigate('/login')}>게스트 입장</LinkButton></Card></Page>
 }
 
 function HostSetup({ guestLoginEnabled }: { guestLoginEnabled: boolean }) {
@@ -165,7 +165,7 @@ function HostSetup({ guestLoginEnabled }: { guestLoginEnabled: boolean }) {
     setGuestPassword(''); setMessage('게스트 비밀번호를 저장했습니다.'); await queryClient.invalidateQueries({ queryKey: ['session'] })
   }
   async function logout() { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/admin', { replace: true }) }
-  return <Page><Card><Eyebrow>Faker Blue · Host</Eyebrow><h1>게스트 입장 설정</h1><Description>참가자에게 공유할 비밀번호를 설정해 주세요.</Description>{message && <Notice $success>{message}</Notice>}{error && <Notice $error>{error}</Notice>}{guestLoginEnabled && <Notice>게스트가 입장할 수 있습니다. 비밀번호를 변경하면 이후 입장부터 새 비밀번호를 사용합니다.</Notice>}<Form onSubmit={save}><label htmlFor="guest-access-password">게스트 비밀번호</label><input id="guest-access-password" type="password" value={guestPassword} onChange={(event) => setGuestPassword(event.target.value)} autoComplete="new-password" required /><Button>{guestLoginEnabled ? '비밀번호 변경' : '비밀번호 설정'}</Button></Form><LinkButton onClick={logout}>호스트 로그아웃</LinkButton><br /><LinkButton onClick={() => navigate('/')}>게임 화면으로</LinkButton></Card></Page>
+  return <Page><Card><Eyebrow>Faker · Host</Eyebrow><h1>게스트 입장 설정</h1><Description>참가자에게 공유할 비밀번호를 설정해 주세요.</Description>{message && <Notice $success>{message}</Notice>}{error && <Notice $error>{error}</Notice>}{guestLoginEnabled && <Notice>게스트가 입장할 수 있습니다. 비밀번호를 변경하면 이후 입장부터 새 비밀번호를 사용합니다.</Notice>}<Form onSubmit={save}><label htmlFor="guest-access-password">게스트 비밀번호</label><input id="guest-access-password" type="password" value={guestPassword} onChange={(event) => setGuestPassword(event.target.value)} autoComplete="new-password" required /><Button>{guestLoginEnabled ? '비밀번호 변경' : '비밀번호 설정'}</Button></Form><LinkButton onClick={logout}>호스트 로그아웃</LinkButton><br /><LinkButton onClick={() => navigate('/')}>게임 화면으로</LinkButton></Card></Page>
 }
 
 function AdminPage() {

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
 import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
+import { animatePlayedCard } from './components/cardAnimations'
 import type { AttackResolutionNotice, DefenseResolutionNotice, GameScreenProps } from './types'
 import { useGameConnection } from './useGameConnection'
 
@@ -293,6 +294,7 @@ export function useGameController(): GameControllerResult {
       showError('대상을 선택해 주세요.')
       return
     }
+    if (clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
     publish('/app/game/bluff/submit', {
       actualCardId: selectedCard.id,
       declaredCardId: selectedDeclaration.id,
@@ -309,6 +311,7 @@ export function useGameController(): GameControllerResult {
       showError('반사할 대상을 선택해 주세요.')
       return
     }
+    if (selectedHandIndex !== null && clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
     publish('/app/game/card/defend', {
       actualCardId: selectedCard.id,
       declaredCardId: selectedDefenseType,
