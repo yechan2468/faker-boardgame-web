@@ -43,13 +43,13 @@ export function getGameStatusText({
     && game.turn.number === defenseOutcomeNotice.turnNumber
     ? [
         defenseOutcomeNotice.handlessPassers.length > 0
-          ? `${defenseOutcomeNotice.handlessPassers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님은 손패가 없어 방어하지 못해 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          ? `${defenseOutcomeNotice.handlessPassers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님은 손패가 없어 방어하지 못해 체력이 ${defenseOutcomeNotice.damageAmount} ${'💔'.repeat(defenseOutcomeNotice.damageAmount)} 감소합니다.`
           : null,
         defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).length > 0
-          ? `${defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          ? `${defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} ${'💔'.repeat(defenseOutcomeNotice.damageAmount)} 감소합니다.`
           : null,
         defenseOutcomeNotice.failedDefenders.length > 0
-          ? `${defenseOutcomeNotice.failedDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님의 방어가 거짓으로 밝혀져 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          ? `${defenseOutcomeNotice.failedDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님의 방어가 거짓으로 밝혀져 체력이 ${defenseOutcomeNotice.damageAmount} ${'💔'.repeat(defenseOutcomeNotice.damageAmount)} 감소합니다.`
           : null,
         defenseOutcomeNotice.successfulDefenders.length > 0
           ? `${defenseOutcomeNotice.successfulDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어에 성공했습니다.`
@@ -61,7 +61,7 @@ export function getGameStatusText({
     && game.turn.phase === 'RESOLVED'
     && game.turn.activePlayerId === alchemistResolutionNotice.actorId
     && game.turn.number === alchemistResolutionNotice.turnNumber
-    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력을 1 ❤️ 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환되었습니다.`
+    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력을 1 ❤️ 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환⇄되었습니다.`
     : null
   const defenseResolutionStatus = defenseResolutionNotice
     && game?.status === 'IN_GAME'

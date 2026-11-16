@@ -59,7 +59,7 @@ const CARD_LONG_EFFECTS: Record<string, string> = {
   priest: '체력을 최대 2 회복❤️❤️합니다. 필드에 남은 토큰만 가져올 수 있습니다.',
   wizard: '받은 공격을 공격자나 다른 플레이어에게 반사⮎합니다.\n반사된 공격의 새 대상도 방어🛡️⮎할 수 있습니다.',
   defender: '받은 공격의 효과를 무효화🛡️합니다.',
-  clown: '능력이 없습니다🤡.\n광대를 낸 경우에는 무조건 다른 능력 카드를 선언해 블러핑해야 합니다.',
+  clown: '능력이 없습니다.\n광대는 무조건 다른 능력 카드를 선언해 블러핑🤡해야 합니다.',
 }
 
 export function getCardLongEffect(cardId: string) {

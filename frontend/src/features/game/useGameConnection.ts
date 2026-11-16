@@ -56,6 +56,19 @@ export function useGameConnection({
             ? statePayload.pendingAction ?? null
             : (payload.pendingAction as GameState['pendingAction'] | undefined) ?? null
           const previousPendingAction = previousState?.pendingAction
+          const outcomePendingAction = previousPendingAction
+            && typeof payload.defenseIndex === 'number'
+            && payload.defenseIndex >= 0
+            && typeof payload.truthful === 'boolean'
+            ? {
+                ...previousPendingAction,
+                defenses: previousPendingAction.defenses.map((defense) =>
+                  defense.index === payload.defenseIndex
+                    ? { ...defense, truthful: payload.truthful as boolean }
+                    : defense,
+                ),
+              }
+            : previousPendingAction
           const attackChallengeTruthful = payload.defenseIndex === -1 && typeof payload.truthful === 'boolean'
             ? payload.truthful
             : previousPendingAction?.attackerTruthful
@@ -102,13 +115,14 @@ export function useGameConnection({
             && nextPendingAction === null
             && nextTurn.number === previousState.turn.number
           ) {
-            const defendedPlayerIds = new Set(previousPendingAction.defenses.map((defense) => defense.playerId))
+            const outcomeDefenses = outcomePendingAction?.defenses ?? previousPendingAction.defenses
+            const defendedPlayerIds = new Set(outcomeDefenses.map((defense) => defense.playerId))
             const passers = previousPendingAction.targetIds.filter((playerId) => !defendedPlayerIds.has(playerId))
             const handlessPassers = passers.filter((playerId) => handlessTargetIds.includes(playerId))
-            const failedDefenders = previousPendingAction.defenses
+            const failedDefenders = outcomeDefenses
               .filter((defense) => defense.truthful === false)
               .map((defense) => defense.playerId)
-            const successfulDefenders = previousPendingAction.defenses
+            const successfulDefenders = outcomeDefenses
               .filter((defense) => defense.truthful !== false)
               .map((defense) => defense.playerId)
             const damageAmount = getCard(previousPendingAction.declaredCardId).healthLoss ?? 0

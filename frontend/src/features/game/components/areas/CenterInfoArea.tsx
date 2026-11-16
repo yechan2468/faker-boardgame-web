@@ -35,6 +35,7 @@ export function CenterInfoArea({
   displayedDeclaration,
   displayedDeclarationLabel,
   displayedCard,
+  selectedCard,
   hostActionPending,
   isMyTurn,
   actions,
@@ -97,6 +98,7 @@ export function CenterInfoArea({
     }
   }
   const visibleCard = visibleCardId ? getCard(visibleCardId) : null
+  const previewCard = displayedDeclaration ? visibleCard : selectedCard
   const actualCardName = displayedDeclaration?.truthful === false
     ? displayedDeclaration.actualCardId && displayedDeclaration.actualCardId !== displayedDeclaration.declaredCardId
       ? getCard(displayedDeclaration.actualCardId).ko
@@ -125,21 +127,22 @@ export function CenterInfoArea({
             )}
             <DeclaredCard
               data-declared-card="true"
-              data-card-effect-id={visibleCard?.id}
+              data-card-effect-id={previewCard?.id}
               $truthful={displayedDeclaration?.truthful ?? null}
+              $previewing={!displayedDeclaration && Boolean(selectedCard)}
               $flipPhase={flipPhase}
               onAnimationEnd={handleFlipAnimationEnd}
             >
-              {visibleCard && (
+              {previewCard && (
                 <>
-                  <CardCornerValue aria-hidden="true" $corner="top-left">{14 - visibleCard.value}</CardCornerValue>
-                  <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - visibleCard.value}</CardCornerValue>
+                  <CardCornerValue aria-hidden="true" $corner="top-left">{14 - previewCard.value}</CardCornerValue>
+                  <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - previewCard.value}</CardCornerValue>
                 </>
               )}
-              {visibleCard && <CardMascot cardId={visibleCard.id} />}
-              {visibleCard && <CardEffectIcons aria-hidden="true">{getCardEffectIcons(visibleCard.id)}</CardEffectIcons>}
-              <DeclaredCardName>{visibleCard?.ko ?? '선언 대기'}</DeclaredCardName>
-              <DeclaredCardEnglish>{visibleCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
+              {previewCard && <CardMascot cardId={previewCard.id} />}
+              {previewCard && <CardEffectIcons aria-hidden="true">{getCardEffectIcons(previewCard.id)}</CardEffectIcons>}
+              <DeclaredCardName>{previewCard?.ko ?? '선언 대기'}</DeclaredCardName>
+              <DeclaredCardEnglish>{previewCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>
           </DeclarationPanel>
           <Deck data-deck-source="true">

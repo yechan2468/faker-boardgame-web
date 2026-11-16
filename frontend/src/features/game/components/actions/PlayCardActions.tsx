@@ -1,6 +1,7 @@
+import { useEffect, useRef, useState } from 'react'
 import type { GameScreenProps } from '../../types'
 import type { CardInfo } from '../../gameUi'
-import { ActionButton, ActionChoices, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationButton, TruthfulDeclarationChoice } from '../../gameStyles'
+import { ActionButton, ActionChoices, ActionEffectChoice, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationButton, TruthfulDeclarationChoice } from '../../gameStyles'
 
 function getDeclaredEffect(card: CardInfo) {
   switch (card.id) {
@@ -35,31 +36,57 @@ export function PlayCardActions({
   targetId,
   selectedCard,
   selectedDeclaration,
-  needsTarget,
   eligibleDeclarations,
   canAct,
   actions,
 }: GameScreenProps) {
+  const [renderedDeclaration, setRenderedDeclaration] = useState<CardInfo | null>(null)
+  const [effectBoxVisible, setEffectBoxVisible] = useState(false)
+  const renderedDeclarationRef = useRef<CardInfo | null>(null)
+
+  useEffect(() => {
+    let closeTimer: number | undefined
+
+    if (selectedDeclaration) {
+      renderedDeclarationRef.current = selectedDeclaration
+      setRenderedDeclaration(selectedDeclaration)
+      setEffectBoxVisible(true)
+    } else if (renderedDeclarationRef.current) {
+      setEffectBoxVisible(false)
+      closeTimer = window.setTimeout(() => {
+        renderedDeclarationRef.current = null
+        setRenderedDeclaration(null)
+      }, 280)
+    }
+
+    return () => {
+      if (closeTimer !== undefined) window.clearTimeout(closeTimer)
+    }
+  }, [selectedDeclaration])
+
   if (!canAct || !selectedCard) return null
 
   const truthfulDeclarationLabel = selectedCard.id === 'clown'
-    ? '광대로 선언 불가: 광대는 거짓말 불가'
+    ? '광대로 선언 불가: 광대는 블러핑만 가능'
     : selectedCard.id === 'wizard'
-      ? '마법사로 선언 불가 (마법사는 방어 용도)'
+      ? '마법사로 선언 불가 (마법사는 방어 전용)'
       : selectedCard.id === 'defender'
-        ? '방패병으로 선언 불가 (방패병은 방어 용도)'
+        ? '방패병으로 선언 불가 (방패병은 방어 전용)'
         : ['vampire-king', 'red-dragon', 'bomber'].includes(selectedCard.id)
           ? `${selectedCard.ko}으로 선언`
           : `${selectedCard.ko}로 선언`
 
   return (
-    <ActionChoices>
+    <ActionChoices key={selectedHandIndex}>
       <TruthfulDeclarationChoice>
         <ChoiceTitle>블러핑하지 않기</ChoiceTitle>
         <TruthfulDeclarationButton
           type="button"
           $selected={selectedDeclarationId === selectedCard.id}
-          onClick={() => actions.setSelectedDeclarationId(selectedCard.id)}
+          onClick={() => {
+            actions.setSelectedDeclarationId(selectedDeclarationId === selectedCard.id ? null : selectedCard.id)
+            actions.setTargetId(null)
+          }}
           disabled={selectedCard.id === 'clown' || !eligibleDeclarations.some((card) => card.id === selectedCard.id)}
         >
           {truthfulDeclarationLabel}
@@ -68,7 +95,7 @@ export function PlayCardActions({
       <Choice>
         <ChoiceTitle>블러핑하기 · 선언 카드 선택</ChoiceTitle>
         <Pills>
-          {eligibleDeclarations.map((card) => {
+          {eligibleDeclarations.filter((card) => card.id !== 'clown').map((card) => {
             const isSameAsHandCard = card.id === selectedCard.id
             return (
               <Pill
@@ -77,7 +104,7 @@ export function PlayCardActions({
                 $selected={!isSameAsHandCard && selectedDeclarationId === card.id}
                 disabled={isSameAsHandCard}
                 onClick={() => {
-                  actions.setSelectedDeclarationId(card.id)
+                  actions.setSelectedDeclarationId(selectedDeclarationId === card.id ? null : card.id)
                   actions.setTargetId(null)
                 }}
               >
@@ -90,13 +117,13 @@ export function PlayCardActions({
           })}
         </Pills>
       </Choice>
-      {selectedDeclaration && (
-        <Choice style={{ gridColumn: '1 / -1' }}>
+      {renderedDeclaration && (
+        <ActionEffectChoice $visible={effectBoxVisible}>
           <ChoiceTitle>
-            {selectedDeclaration.ko} · {selectedDeclaration.en}
-            {needsTarget ? ' — 대상 플레이어를 선택해 주세요.' : ''}
+            {renderedDeclaration.ko} · {renderedDeclaration.en}
+            {renderedDeclaration.target ? '  대상 플레이어를 선택해 주세요' : ''}
           </ChoiceTitle>
-          {needsTarget && (
+          {renderedDeclaration.target && (
             <Pills>
               {opponents.filter((player) => player.alive).map((player) => (
                 <Pill
@@ -111,12 +138,12 @@ export function PlayCardActions({
             </Pills>
           )}
           <CardEffectText role="status">
-            {getEffectHint(selectedDeclaration, selectedCard.id === selectedDeclaration.id && selectedCard.id !== 'clown')}
+            {getEffectHint(renderedDeclaration, selectedCard.id === renderedDeclaration.id && selectedCard.id !== 'clown')}
           </CardEffectText>
-          <ActionButton type="button" onClick={actions.submitBluff} disabled={needsTarget && !targetId}>
+          <ActionButton type="button" onClick={actions.submitBluff} disabled={renderedDeclaration.target && !targetId}>
             카드 제출
           </ActionButton>
-        </Choice>
+        </ActionEffectChoice>
       )}
     </ActionChoices>
   )

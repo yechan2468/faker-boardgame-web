@@ -277,11 +277,17 @@ const revealCardWobble = keyframes`
 
 export const DeclaredCard = styled.div<{
   $truthful: boolean | null
+  $previewing?: boolean
   $flipPhase?: 'hide' | 'reveal' | 'wobble' | null
 }>`
   ${sharedCardSurface}
   transform-style: preserve-3d;
   backface-visibility: hidden;
+  ${({ $previewing }) => $previewing && css`
+    transform: translateY(-0.3rem) scale(1.035);
+    opacity: 0.6;
+    box-shadow: 0 5px 0 #111c43, 0 12px 20px rgb(18 25 65 / 28%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%);
+  `}
   ${({ $flipPhase }) => $flipPhase === 'hide' && css`
     animation: ${flipCardAway} 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
   `}
@@ -369,6 +375,10 @@ export const TurnOverlay = styled.div`
   animation: ${TurnGlow} 2s ease both;
 `
 
+const actionChoicesRise = keyframes`
+  from { opacity: 0.95; transform: translateY(0.55rem); }
+  to { opacity: 1; transform: translateY(0); }
+`
 export const ActionChoices = styled.div`
   position: absolute;
   inset: auto 0 1.5rem;
@@ -377,6 +387,8 @@ export const ActionChoices = styled.div`
   gap: 1rem;
   width: min(100% - 2rem, 68rem);
   margin: auto;
+  animation: ${actionChoicesRise} 280ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 
 export const GameActionButtons = styled.div`
@@ -398,6 +410,54 @@ export const Choice = styled.div<{ $center?: boolean }>`
   background: linear-gradient(155deg, #d9f3fb, #bceafa);
   box-shadow: 0 2px 0 #79c6df, 0 5px 12px rgb(18 25 65 / 14%);
   text-align: center;
+`
+const actionEffectExpand = keyframes`
+  from {
+    max-height: 0;
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-width: 0;
+    opacity: 0.95;
+    transform: translateY(0.55rem);
+  }
+  to {
+    max-height: 40rem;
+    min-height: 4.3rem;
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+    border-width: 1px;
+    opacity: 1;
+    transform: translateY(0);
+  }
+`
+export const ActionEffectChoice = styled(Choice)<{ $visible: boolean }>`
+  grid-column: 1 / -1;
+  min-height: ${({ $visible }) => ($visible ? '4.3rem' : '0')};
+  max-height: ${({ $visible }) => ($visible ? '40rem' : '0')};
+  padding: ${({ $visible }) => ($visible ? '0.7rem 0.85rem' : '0 0.85rem')};
+  border-width: ${({ $visible }) => ($visible ? '1px' : '0')};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transform: translateY(${({ $visible }) => ($visible ? '0' : '0.55rem')});
+  visibility: ${({ $visible }) => ($visible ? 'visible' : 'hidden')};
+  pointer-events: ${({ $visible }) => ($visible ? 'auto' : 'none')};
+  overflow: hidden;
+  ${({ $visible }) => $visible && css`
+    animation: ${actionEffectExpand} 280ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
+  `}
+  transition:
+    max-height 280ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    min-height 280ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    padding 280ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-width 280ms ease,
+    opacity 220ms ease,
+    transform 280ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    visibility 0s linear ${({ $visible }) => ($visible ? '0s' : '280ms')};
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    animation: none;
+  }
 `
 export const TruthfulDeclarationChoice = styled(Choice)`
   display: grid;
