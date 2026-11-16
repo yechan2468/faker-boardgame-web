@@ -204,6 +204,13 @@ const sharedCardSurface = css<SharedCardProps>`
     : '0 2px 0 #147aa3, 0 6px 12px rgb(18 25 65 / 16%)')};
 `
 
+const liftSelectedCard = keyframes`
+  0% { transform: translateY(0) scale(1); }
+  55% { transform: translateY(-1.4rem) scale(1.09); }
+  78% { transform: translateY(-0.95rem) scale(1.04); }
+  100% { transform: translateY(-1.15rem) scale(1.07); }
+`
+
 export const DeclarationText = styled.div`
   color: #fff;
   font-size: clamp(0.92rem, 1.5vw, 1.2rem);
@@ -452,10 +459,19 @@ export const GameCard = styled.button<{ $selected: boolean }>`
   height: clamp(10rem, 21vh, 13rem);
   padding: 0.65rem 0.55rem 0.75rem;
   ${CardArtFrame} { height: clamp(5.2rem, 10vh, 6.4rem); }
-  transform: ${({ $selected }) => ($selected ? 'translateY(-0.55rem)' : 'none')};
+  position: relative;
+  z-index: ${({ $selected }) => ($selected ? 2 : 0)};
+  transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'none')};
+  ${({ $selected }) => $selected && css`
+    box-shadow: 0 4px 0 #202d69, 0 0 0 3px rgb(105 210 241 / 72%), 0 14px 24px rgb(18 25 65 / 35%);
+    animation: ${liftSelectedCard} 260ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+  `}
   cursor: pointer;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
-  &:hover { transform: translateY(-0.35rem); }
+  &:hover {
+    transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'translateY(-0.35rem)')};
+  }
+  @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const CardKorean = styled.span`
   color: #202124;

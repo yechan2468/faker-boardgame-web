@@ -162,7 +162,9 @@ export function useGameController(): GameControllerResult {
   const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
   const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
   const needsTarget = Boolean(selectedDeclaration?.target)
-  const eligibleDeclarations = CARD_INFO.filter((card) => !['wizard', 'defender', 'clown'].includes(card.id))
+  const eligibleDeclarations = CARD_INFO
+    .filter((card) => !['wizard', 'defender'].includes(card.id))
+    .sort((left, right) => right.value - left.value)
   const activeDefenseDeclaration = game?.turn.phase === 'DEFENSE_SUSPICION'
     ? pending?.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)
     : null
