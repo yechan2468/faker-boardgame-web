@@ -112,6 +112,7 @@ export function useGameController(): GameControllerResult {
     }
     if (currentTurnId && previousTurnRef.current !== currentTurnId) {
       setTurnIntro(true)
+      setDeclarationNotice(null)
     }
     previousTurnRef.current = currentTurnId
   }, [currentTurnId, gameStatus])
@@ -228,33 +229,46 @@ export function useGameController(): GameControllerResult {
       return
     }
 
+    const expectedEvent = destination === '/app/game/end' ? 'MATCH_ENDED' : 'MATCH_STARTED'
+    let actionTimeout: number | undefined
+    let completed = false
+    const finishAction = () => {
+      if (completed) return
+      completed = true
+      window.clearTimeout(actionTimeout)
+      setHostActionPending(false)
+      void client.deactivate()
+    }
     const client = new Client({
       brokerURL: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
       reconnectDelay: 0,
       onConnect: () => {
+        client.subscribe('/topic/game', (message: IMessage) => {
+          const payload = JSON.parse(message.body) as { type?: string }
+          if (payload.type !== expectedEvent) return
+          void queryClient.invalidateQueries({ queryKey: ['game-state'] })
+          finishAction()
+        })
         client.subscribe('/user/queue/errors', (message: IMessage) => {
           const payload = JSON.parse(message.body) as { message?: string }
           showError(payload.message || failureMessage)
-          setHostActionPending(false)
-          void client.deactivate()
+          finishAction()
         })
         client.publish({ destination, body: '{}' })
-        window.setTimeout(() => {
-          setHostActionPending(false)
-          void client.deactivate()
-        }, 1200)
       },
       onStompError: (frame) => {
         showError(frame.headers.message || failureMessage)
-        setHostActionPending(false)
-        void client.deactivate()
+        finishAction()
       },
       onWebSocketError: () => {
         showError(failureMessage)
-        setHostActionPending(false)
-        void client.deactivate()
+        finishAction()
       },
     })
+    actionTimeout = window.setTimeout(() => {
+      showError(failureMessage)
+      finishAction()
+    }, 5000)
     client.activate()
   }
 

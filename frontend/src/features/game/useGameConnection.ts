@@ -26,7 +26,7 @@ export function useGameConnection({
 }: GameConnectionOptions) {
   const clientRef = useRef<Client | null>(null)
   useEffect(() => {
-    if (gameStatus !== 'IN_GAME') return
+    if (!gameStatus) return
     const client = new Client({
       brokerURL: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
       reconnectDelay: 2500,
