@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react'
 import type { GameScreenProps } from '../types'
 import {
   BottomArea,
+  CardCornerValue,
   CardEnglish,
   CardKorean,
   GameCard,
@@ -19,29 +20,44 @@ import { getCard } from '../gameUi'
 import { CardMascot } from './CardMascot'
 import { animateCardDraw } from './cardAnimations'
 
-export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, actions }: GameScreenProps) {
+type DrawnCard = { cardId: string; occurrence: number }
+const DRAW_ANIMATION_DELAY_MS = 1000
+
+export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
   const handElement = useRef<HTMLDivElement>(null)
   const previousHand = useRef<string[]>([])
+  const pendingDrawCards = useRef<DrawnCard[]>([])
 
   useLayoutEffect(() => {
     const previousCounts = new Map<string, number>()
     previousHand.current.forEach((cardId) => previousCounts.set(cardId, (previousCounts.get(cardId) ?? 0) + 1))
     const currentCounts = new Map<string, number>()
-    const drawnIndexes: number[] = []
+    const drawnCards: DrawnCard[] = []
     hand.forEach((cardId, index) => {
       const occurrence = currentCounts.get(cardId) ?? 0
-      if (occurrence >= (previousCounts.get(cardId) ?? 0)) drawnIndexes.push(index)
+      if (occurrence >= (previousCounts.get(cardId) ?? 0)) drawnCards.push({ cardId, occurrence })
       currentCounts.set(cardId, occurrence + 1)
     })
     previousHand.current = [...hand]
 
+    if (hand.length === 0) pendingDrawCards.current = []
+    if (turnIntro) {
+      pendingDrawCards.current.push(...drawnCards)
+      return
+    }
+
+    const cardsToAnimate = [...pendingDrawCards.current, ...drawnCards]
+    pendingDrawCards.current = []
     const deck = document.querySelector<HTMLElement>('[data-deck-source]')
     if (!deck) return
-    drawnIndexes.forEach((index, order) => {
+    cardsToAnimate.forEach(({ cardId, occurrence }, order) => {
+      let seen = 0
+      const index = hand.findIndex((id) => id === cardId && seen++ === occurrence)
+      if (index < 0) return
       const card = handElement.current?.querySelector<HTMLElement>(`[data-hand-index="${index}"]`)
-      if (card) animateCardDraw(card, deck, order * 110)
+      if (card) animateCardDraw(card, deck, DRAW_ANIMATION_DELAY_MS + order * 110)
     })
-  }, [hand])
+  }, [hand, turnIntro])
 
   return (
     <BottomArea>
@@ -62,10 +78,16 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, a
               data-hand-index={index}
               type="button"
               $selected={selectedHandIndex === index}
-              onClick={() => actions.setSelectedHandIndex(selectedHandIndex === index ? null : index)}
+              onClick={() => {
+                actions.setSelectedHandIndex(selectedHandIndex === index ? null : index)
+                actions.setSelectedDeclarationId(null)
+                actions.setTargetId(null)
+              }}
               aria-pressed={selectedHandIndex === index}
               draggable={false}
             >
+              <CardCornerValue aria-hidden="true" $corner="top-left">{14 - card.value}</CardCornerValue>
+              <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - card.value}</CardCornerValue>
               <CardMascot cardId={card.id} large />
               <CardKorean>{card.ko}</CardKorean>
               <CardEnglish>{card.en}</CardEnglish>

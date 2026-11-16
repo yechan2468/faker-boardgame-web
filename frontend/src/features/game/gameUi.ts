@@ -5,17 +5,19 @@ export type CardInfo = {
   ko: string
   en: string
   target: boolean
+  allTargets?: boolean
+  healthLoss?: number
   value: number
 }
 
 export const CARD_INFO: readonly CardInfo[] = [
-  { id: 'assassin', ko: '암살자', en: 'Assassin', target: true, value: 12 },
-  { id: 'warlock', ko: '흑마법사', en: 'Warlock', target: true, value: 9 },
-  { id: 'red-dragon', ko: '불용', en: 'Red Dragon', target: false, value: 10 },
-  { id: 'archer', ko: '궁수', en: 'Archer', target: true, value: 8 },
-  { id: 'bomber', ko: '폭탄병', en: 'Bomber', target: false, value: 6 },
-  { id: 'vampire-king', ko: '뱀파이어킹', en: 'Vampire King', target: false, value: 13 },
-  { id: 'vampire', ko: '뱀파이어', en: 'Vampire', target: true, value: 5 },
+  { id: 'assassin', ko: '암살자', en: 'Assassin', target: true, healthLoss: 3, value: 12 },
+  { id: 'warlock', ko: '흑마법사', en: 'Warlock', target: true, healthLoss: 3, value: 9 },
+  { id: 'red-dragon', ko: '불용', en: 'Red Dragon', target: false, allTargets: true, healthLoss: 2, value: 10 },
+  { id: 'archer', ko: '궁수', en: 'Archer', target: true, healthLoss: 2, value: 8 },
+  { id: 'bomber', ko: '폭탄병', en: 'Bomber', target: false, allTargets: true, healthLoss: 1, value: 6 },
+  { id: 'vampire-king', ko: '뱀파이어킹', en: 'Vampire King', target: false, allTargets: true, healthLoss: 1, value: 13 },
+  { id: 'vampire', ko: '뱀파이어', en: 'Vampire', target: true, healthLoss: 1, value: 5 },
   { id: 'alchemist', ko: '연금술사', en: 'Alchemist', target: true, value: 4 },
   { id: 'high-priest', ko: '고위사제', en: 'High Priest', target: false, value: 11 },
   { id: 'priest', ko: '사제', en: 'Priest', target: false, value: 7 },
@@ -29,6 +31,7 @@ export type DeclarationNotice = {
   declaredCardId: string
   truthful: boolean | null
   actualCardId?: string | null
+  targetIds?: string[]
 }
 
 export function getCard(id: string): CardInfo {

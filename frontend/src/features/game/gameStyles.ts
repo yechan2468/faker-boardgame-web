@@ -187,6 +187,7 @@ type SharedCardProps = {
 }
 
 const sharedCardSurface = css<SharedCardProps>`
+  position: relative;
   display: grid;
   grid-template-rows: auto 1fr auto;
   justify-items: center;
@@ -202,6 +203,23 @@ const sharedCardSurface = css<SharedCardProps>`
   box-shadow: ${({ $selected }) => ($selected
     ? '0 2px 0 #202d69, 0 0 0 2px rgb(41 56 124 / 24%), 0 8px 14px rgb(18 25 65 / 20%)'
     : '0 2px 0 #147aa3, 0 6px 12px rgb(18 25 65 / 16%)')};
+`
+
+export const CardCornerValue = styled.span<{ $corner: 'top-left' | 'bottom-right' }>`
+  position: absolute;
+  z-index: 2;
+  ${({ $corner }) => $corner === 'top-left'
+    ? css`top: 0.45rem; left: 0.5rem;`
+    : css`right: 0.5rem; bottom: 0.45rem; transform: rotate(180deg);`}
+  color: #202d69;
+  font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.05rem, 1.6vw, 1.4rem);
+  font-variant-numeric: lining-nums;
+  font-weight: 900;
+  line-height: 0.9;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 65%);
+  pointer-events: none;
+  user-select: none;
 `
 
 const liftSelectedCard = keyframes`
@@ -261,15 +279,18 @@ export const DeclaredCard = styled.div<{
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const DeclaredCardName = styled.div`
-  color: #202124;
+  color: #202d69;
+  font-family: 'Noto Serif KR', 'Batang', 'BatangChe', 'Nanum Myeongjo', Georgia, 'Times New Roman', serif;
   font-size: clamp(0.88rem, 1.5vw, 1.15rem);
-  font-weight: 850;
+  font-weight: 900;
   line-height: 1.2;
+  transform: translateY(1rem);
 `
 export const DeclaredCardEnglish = styled.div`
-  color: #202124;
+  color: #202d69;
+  font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: 0.64rem;
-  font-weight: 650;
+  font-weight: 800;
 `
 export const Status = styled.div`
   min-height: 1.8rem;
@@ -346,6 +367,18 @@ export const ChoiceTitle = styled.div`
   font-size: 0.78rem;
   font-weight: 750;
 `
+export const CardEffectText = styled.p`
+  margin: 0.6rem auto;
+  max-width: 38rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 0.65rem;
+  color: #202d69;
+  background: rgb(255 255 255 / 65%);
+  font-size: 0.75rem;
+  font-weight: 650;
+  line-height: 1.45;
+  white-space: pre-line;
+`
 export const Pills = styled.div`
   display: flex;
   justify-content: center;
@@ -364,6 +397,14 @@ export const Pill = styled.button<{ $selected?: boolean }>`
   font-weight: 700;
   cursor: pointer;
   &:disabled { cursor: not-allowed; opacity: 0.48; }
+`
+export const PillRank = styled.sup<{ $selected?: boolean }>`
+  margin-right: 0.22rem;
+  color: ${({ $selected }) => ($selected ? '#fff' : '#202d69')};
+  font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
+  font-size: 0.75em;
+  font-weight: 900;
+  line-height: 0;
 `
 export const ActionButton = styled.button`
   border: 1px solid #6e214f;
@@ -474,15 +515,18 @@ export const GameCard = styled.button<{ $selected: boolean }>`
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const CardKorean = styled.span`
-  color: #202124;
+  color: #202d69;
+  font-family: 'Noto Serif KR', 'Batang', 'BatangChe', 'Nanum Myeongjo', Georgia, 'Times New Roman', serif;
   font-size: clamp(1rem, 1.7vw, 1.3rem);
-  font-weight: 850;
+  font-weight: 900;
   line-height: 1.2;
+  transform: translateY(1rem);
 `
 export const CardEnglish = styled.span`
-  color: #202124;
+  color: #202d69;
+  font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: 0.72rem;
-  font-weight: 650;
+  font-weight: 800;
 `
 export const DialogBackdrop = styled.div`
   position: fixed;

@@ -17,6 +17,21 @@ export type DefenseResolutionNotice = {
   turnNumber: number
 }
 
+export type DefenseOutcomeNotice = {
+  actorId: string
+  turnNumber: number
+  damageAmount: number
+  passers: string[]
+  successfulDefenders: string[]
+  failedDefenders: string[]
+}
+
+export type AlchemistResolutionNotice = {
+  actorId: string
+  targetId: string
+  turnNumber: number
+}
+
 export type GameScreenActions = {
   setModalOpen: Dispatch<SetStateAction<boolean>>
   setTurnIntro: Dispatch<SetStateAction<boolean>>

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
 import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
 import { animatePlayedCard } from './components/cardAnimations'
-import type { AttackResolutionNotice, DefenseResolutionNotice, GameScreenProps } from './types'
+import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice, GameScreenProps } from './types'
 import { useGameConnection } from './useGameConnection'
 
 async function fetchGameState(): Promise<GameState> {
@@ -51,6 +51,8 @@ export function useGameController(): GameControllerResult {
   const [declarationNotice, setDeclarationNotice] = useState<DeclarationNotice | null>(null)
   const [attackResolutionNotice, setAttackResolutionNotice] = useState<AttackResolutionNotice | null>(null)
   const [defenseResolutionNotice, setDefenseResolutionNotice] = useState<DefenseResolutionNotice | null>(null)
+  const [defenseOutcomeNotice, setDefenseOutcomeNotice] = useState<DefenseOutcomeNotice | null>(null)
+  const [alchemistResolutionNotice, setAlchemistResolutionNotice] = useState<AlchemistResolutionNotice | null>(null)
   const [turnIntro, setTurnIntro] = useState(false)
   const [hostActionPending, setHostActionPending] = useState(false)
   const errorTimerRef = useRef<number | undefined>(undefined)
@@ -74,9 +76,12 @@ export function useGameController(): GameControllerResult {
     queryClient,
     showError,
     setHand,
+    setTurnIntro,
     setDeclarationNotice,
     setAttackResolutionNotice,
     setDefenseResolutionNotice,
+    setDefenseOutcomeNotice,
+    setAlchemistResolutionNotice,
   })
 
   useEffect(() => {
@@ -98,10 +103,14 @@ export function useGameController(): GameControllerResult {
       setDeclarationNotice(null)
       setAttackResolutionNotice(null)
       setDefenseResolutionNotice(null)
+      setDefenseOutcomeNotice(null)
+      setAlchemistResolutionNotice(null)
     } else if (gameStatus === 'LOBBY' && !game?.matchResult) {
       setDeclarationNotice(null)
       setAttackResolutionNotice(null)
       setDefenseResolutionNotice(null)
+      setDefenseOutcomeNotice(null)
+      setAlchemistResolutionNotice(null)
     }
     previousGameStatusRef.current = gameStatus ?? null
   }, [gameStatus, game?.matchResult])
@@ -139,6 +148,12 @@ export function useGameController(): GameControllerResult {
     ? []
     : [...aliveTurnOrder.slice(currentOrderIndex), ...aliveTurnOrder.slice(0, currentOrderIndex)].slice(0, 4)
   const isMyTurn = Boolean(game?.status === 'IN_GAME' && game.turn.activePlayerId === game.viewerId)
+  const mustDefend = Boolean(
+    game?.turn.phase === 'DEFENSE' &&
+    pending && viewerId && pending.targetIds.includes(viewerId) &&
+    !pending.defensePasses.includes(viewerId) &&
+    !pending.defenses.some((defense) => defense.playerId === viewerId),
+  )
   const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
   const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
   const attackResolutionStatus = attackResolutionNotice
@@ -149,6 +164,30 @@ export function useGameController(): GameControllerResult {
     ? attackResolutionNotice.truthful
       ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
       : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 선언한 카드의 능력은 무효화됩니다.`
+    : null
+  const defenseOutcomeStatus = defenseOutcomeNotice
+    && game
+    && (game.status === 'IN_GAME' || game.matchResult)
+    && game.turn.phase === 'RESOLVED'
+    && game.turn.number === defenseOutcomeNotice.turnNumber
+    ? [
+        defenseOutcomeNotice.passers.length > 0
+          ? `${defenseOutcomeNotice.passers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          : null,
+        defenseOutcomeNotice.failedDefenders.length > 0
+          ? `${defenseOutcomeNotice.failedDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님의 방어가 거짓으로 밝혀져 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          : null,
+        defenseOutcomeNotice.successfulDefenders.length > 0
+          ? `${defenseOutcomeNotice.successfulDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어에 성공했습니다.`
+          : null,
+      ].filter((message): message is string => message !== null).join(' ')
+    : null
+  const alchemistResolutionStatus = alchemistResolutionNotice
+    && game?.status === 'IN_GAME'
+    && game.turn.phase === 'RESOLVED'
+    && game.turn.activePlayerId === alchemistResolutionNotice.actorId
+    && game.turn.number === alchemistResolutionNotice.turnNumber
+    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력 토큰 1개를 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환되었습니다.`
     : null
   const defenseResolutionStatus = defenseResolutionNotice
     && game?.status === 'IN_GAME'
@@ -174,6 +213,7 @@ export function useGameController(): GameControllerResult {
         declaredCardId: activeDefenseDeclaration.declaredCardId,
         truthful: activeDefenseDeclaration.truthful,
         actualCardId: activeDefenseDeclaration.actualCardId,
+        targetIds: [],
       }
     : pending
       ? {
@@ -181,6 +221,7 @@ export function useGameController(): GameControllerResult {
           declaredCardId: pending.declaredCardId,
           truthful: pending.attackerTruthful,
           actualCardId: pending.attackerActualCardId,
+          targetIds: pending.targetIds,
         }
       : null
   const displayedDeclaration = declarationNotice ?? pendingDeclarationNotice
@@ -188,19 +229,34 @@ export function useGameController(): GameControllerResult {
   const displayedPlayerName = displayedDeclaration
     ? getPlayerName(game?.players ?? [], displayedDeclaration.playerId)
     : null
-  const displayedDeclarationLabel = displayedDeclaration && displayedCard
-    ? displayedDeclaration.playerId === viewerId
-      ? `나의 ${displayedCard.ko} 선언`
-      : `${displayedPlayerName} 님의 ${displayedCard.ko} 선언`
+  const declarationBaseLabel = displayedDeclaration && displayedCard
+    ? displayedCard.target || displayedCard.allTargets
+      ? displayedDeclaration.playerId === viewerId
+        ? `나의 ${displayedCard.ko} 선언`
+        : `${displayedPlayerName} 님이 ${displayedCard.ko} 선언`
+      : displayedDeclaration.playerId === viewerId
+        ? `나의 ${displayedCard.ko} 선언`
+        : `${displayedPlayerName} 님의 ${displayedCard.ko} 선언`
     : null
-  const statusText = defenseResolutionStatus
+  const displayedDeclarationLabel = displayedDeclaration && displayedCard
+    ? `${declarationBaseLabel}${displayedCard.allTargets
+        ? ' (대상: 전원)'
+        : displayedCard.target && displayedDeclaration.targetIds?.length
+          ? ` (대상: ${displayedDeclaration.targetIds.map((playerId) => getPlayerName(game?.players ?? [], playerId)).join(', ')})`
+          : ''}`
+    : null
+  const statusText = defenseOutcomeStatus
+    ?? defenseResolutionStatus
+    ?? alchemistResolutionStatus
     ?? attackResolutionStatus
     ?? (errorMessage
     ? errorMessage
     : game?.status !== 'IN_GAME'
       ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
       : game.turn.phase === 'DEFENSE'
-        ? '공격 대상들이 방어를 선택하는 중입니다.'
+        ? mustDefend && pending
+          ? `${getPlayerName(game.players, pending.actorId)} 님의 공격을 받았습니다. 방어를 선택하세요.`
+          : '공격 대상들이 방어를 선택하는 중입니다.'
         : game.turn.phase === 'SUSPICION'
           ? '의심을 진행 중입니다.'
             : game.turn.phase === 'DEFENSE_SUSPICION'
@@ -335,11 +391,6 @@ export function useGameController(): GameControllerResult {
   const passSuspicion = () => publish('/app/game/bluff/pass', {})
   const submitTurnEnd = () => publish('/app/game/turn-end', {})
   const canAct = Boolean(isMyTurn && game?.turn.phase === 'START' && !pending)
-  const mustDefend = Boolean(
-    game?.turn.phase === 'DEFENSE' &&
-    pending && pending.targetIds.includes(game.viewerId ?? '') &&
-    !pending.defensePasses.includes(game.viewerId ?? ''),
-  )
   useEffect(() => {
     if (mustDefend && !previousMustDefendRef.current) {
       setSelectedHandIndex(null)

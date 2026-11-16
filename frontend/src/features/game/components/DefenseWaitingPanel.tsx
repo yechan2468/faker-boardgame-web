@@ -8,7 +8,7 @@ export function DefenseWaitingPanel({ game, mustDefend }: GameScreenProps) {
 
   return (
     <ActionChoices>
-      <Choice>
+      <Choice $center>
         <ChoiceTitle>공격 대상의 방어 선택을 기다리는 중</ChoiceTitle>
         <Pills>
           {pending.defenses.map((defense) => (

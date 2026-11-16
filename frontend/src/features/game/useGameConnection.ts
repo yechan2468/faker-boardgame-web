@@ -2,17 +2,20 @@ import { Client, type IMessage } from '@stomp/stompjs'
 import type { QueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
-import type { AttackResolutionNotice, DefenseResolutionNotice } from './types'
-import type { DeclarationNotice } from './gameUi'
+import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice } from './types'
+import { getCard, type DeclarationNotice } from './gameUi'
 
 type GameConnectionOptions = {
   gameStatus: string | undefined
   queryClient: QueryClient
   showError: (message: string) => void
   setHand: Dispatch<SetStateAction<string[]>>
+  setTurnIntro: Dispatch<SetStateAction<boolean>>
   setDeclarationNotice: Dispatch<SetStateAction<DeclarationNotice | null>>
   setAttackResolutionNotice: Dispatch<SetStateAction<AttackResolutionNotice | null>>
   setDefenseResolutionNotice: Dispatch<SetStateAction<DefenseResolutionNotice | null>>
+  setDefenseOutcomeNotice: Dispatch<SetStateAction<DefenseOutcomeNotice | null>>
+  setAlchemistResolutionNotice: Dispatch<SetStateAction<AlchemistResolutionNotice | null>>
 }
 
 export function useGameConnection({
@@ -20,9 +23,12 @@ export function useGameConnection({
   queryClient,
   showError,
   setHand,
+  setTurnIntro,
   setDeclarationNotice,
   setAttackResolutionNotice,
   setDefenseResolutionNotice,
+  setDefenseOutcomeNotice,
+  setAlchemistResolutionNotice,
 }: GameConnectionOptions) {
   const clientRef = useRef<Client | null>(null)
   useEffect(() => {
@@ -42,17 +48,80 @@ export function useGameConnection({
           const pendingAction = statePayload?.pendingAction
             ?? (payload.pendingAction as GameState['pendingAction'] | undefined)
             ?? null
+          const previousState = queryClient.getQueryData<GameState>(['game-state'])
+          const nextTurn = statePayload?.turn ?? payload.turn as GameState['turn'] | undefined
+          const nextPendingAction = statePayload
+            ? statePayload.pendingAction ?? null
+            : (payload.pendingAction as GameState['pendingAction'] | undefined) ?? null
+          const previousPendingAction = previousState?.pendingAction
+          const alchemistTargetId = previousPendingAction?.targetIds[0]
+          const challengedAlchemistTruth = payload.declaredCardId === 'alchemist'
+            && payload.defenseIndex === -1
+            && typeof payload.truthful === 'boolean'
+            ? payload.truthful
+            : previousPendingAction?.attackerTruthful
+          if (
+            previousState?.status === 'IN_GAME'
+            && previousPendingAction?.declaredCardId === 'alchemist'
+            && challengedAlchemistTruth !== false
+            && alchemistTargetId
+            && nextTurn?.phase === 'RESOLVED'
+            && nextPendingAction === null
+            && nextTurn.number === previousState.turn.number
+          ) {
+            setAlchemistResolutionNotice({
+              actorId: previousPendingAction.actorId,
+              targetId: alchemistTargetId,
+              turnNumber: nextTurn.number,
+            })
+          }
+          if (
+            previousState?.status === 'IN_GAME'
+            && (previousState.turn.phase === 'DEFENSE' || previousState.turn.phase === 'DEFENSE_SUSPICION')
+            && previousPendingAction
+            && nextTurn?.phase === 'RESOLVED'
+            && nextPendingAction === null
+            && nextTurn.number === previousState.turn.number
+          ) {
+            const defendedPlayerIds = new Set(previousPendingAction.defenses.map((defense) => defense.playerId))
+            const passers = previousPendingAction.targetIds.filter((playerId) => !defendedPlayerIds.has(playerId))
+            const failedDefenders = previousPendingAction.defenses
+              .filter((defense) => defense.truthful === false)
+              .map((defense) => defense.playerId)
+            const successfulDefenders = previousPendingAction.defenses
+              .filter((defense) => defense.truthful !== false)
+              .map((defense) => defense.playerId)
+            const damageAmount = getCard(previousPendingAction.declaredCardId).healthLoss ?? 0
+            setDefenseOutcomeNotice({
+              actorId: previousPendingAction.actorId,
+              turnNumber: nextTurn.number,
+              damageAmount,
+              passers,
+              successfulDefenders,
+              failedDefenders,
+            })
+          }
           if (payload.type === 'MATCH_STARTED') {
+            setTurnIntro(true)
             setDeclarationNotice(null)
             setAttackResolutionNotice(null)
             setDefenseResolutionNotice(null)
+            setDefenseOutcomeNotice(null)
+            setAlchemistResolutionNotice(null)
+          }
+          if (payload.type === 'TURN_STARTED') {
+            setTurnIntro(true)
+            setDefenseOutcomeNotice(null)
+            setAlchemistResolutionNotice(null)
           }
           if (payload.type === 'DEFENSE_SUBMITTED') setDefenseResolutionNotice(null)
           if (payload.type === 'BLUFF_SUBMITTED' && pendingAction) {
+            setDefenseOutcomeNotice(null)
             setDeclarationNotice({
               playerId: pendingAction.actorId,
               declaredCardId: pendingAction.declaredCardId,
               truthful: pendingAction.attackerTruthful,
+              targetIds: pendingAction.targetIds,
             })
           }
           if (payload.type === 'DEFENSE_SUBMITTED' && pendingAction?.defenses.length) {
@@ -61,6 +130,7 @@ export function useGameConnection({
               playerId: defense.playerId,
               declaredCardId: defense.declaredCardId,
               truthful: defense.truthful,
+              targetIds: [],
             })
           }
           if (typeof payload.truthful === 'boolean' && typeof payload.declaredCardId === 'string') {
@@ -68,12 +138,19 @@ export function useGameConnection({
               ? payload.challengedPlayerId
               : payload.actorId
             if (typeof playerId === 'string') {
-              setDeclarationNotice({
+              const resolvedTargets = statePayload?.pendingAction?.actorId === playerId
+                ? statePayload.pendingAction.targetIds
+                : undefined
+              setDeclarationNotice((previous) => ({
                 playerId,
                 declaredCardId: payload.declaredCardId,
                 truthful: payload.truthful,
                 actualCardId: typeof payload.actualCardId === 'string' ? payload.actualCardId : null,
-              })
+                targetIds: resolvedTargets ?? (previous?.playerId === playerId
+                  && previous.declaredCardId === payload.declaredCardId
+                  ? previous.targetIds
+                  : undefined),
+              }))
             }
             if (
               payload.defenseIndex === -1

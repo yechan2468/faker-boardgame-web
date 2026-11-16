@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState, type AnimationEvent } from 'react'
 import type { GameScreenProps } from '../types'
 import {
   ActionButton,
+  CardCornerValue,
   CenterContent,
   Deck,
   DeckCount,
@@ -114,6 +115,12 @@ export function CenterInfoArea({
               $flipPhase={flipPhase}
               onAnimationEnd={handleFlipAnimationEnd}
             >
+              {visibleCard && (
+                <>
+                  <CardCornerValue aria-hidden="true" $corner="top-left">{14 - visibleCard.value}</CardCornerValue>
+                  <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - visibleCard.value}</CardCornerValue>
+                </>
+              )}
               {visibleCard && <CardMascot cardId={visibleCard.id} />}
               <DeclaredCardName>{visibleCard?.ko ?? '선언 대기'}</DeclaredCardName>
               <DeclaredCardEnglish>{visibleCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>

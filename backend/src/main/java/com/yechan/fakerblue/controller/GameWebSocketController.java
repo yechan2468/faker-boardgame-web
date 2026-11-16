@@ -33,16 +33,16 @@ public class GameWebSocketController {
         GamePrincipal host = requirePlayer(user);
         requireHost(host);
         state.startGame();
-        publishPrivateHands();
         publish("MATCH_STARTED");
+        publishPrivateHands();
     }
     @MessageMapping("game/restart")
     public void restart(Principal user) {
         GamePrincipal host = requirePlayer(user);
         requireHost(host);
         state.restartGame();
-        publishPrivateHands();
         publish("MATCH_STARTED");
+        publishPrivateHands();
     }
     @MessageMapping("game/end")
     public void end(Principal user) {
@@ -62,8 +62,8 @@ public class GameWebSocketController {
     public void turnEnd(Principal user) {
         GamePrincipal player = requirePlayer(user);
         var next = state.endTurn(player.getId());
-        if (next != null) messaging.convertAndSendToUser(next.id(), "/queue/private", new PrivateHand(next.cards()));
         publish(next == null ? "MATCH_ENDED" : "TURN_STARTED");
+        if (next != null) messaging.convertAndSendToUser(next.id(), "/queue/private", new PrivateHand(next.cards()));
     }
     @MessageMapping("game/bluff/submit")
     public void submitBluff(BluffMessage message, Principal user) {
