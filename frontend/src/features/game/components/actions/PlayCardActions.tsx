@@ -1,6 +1,6 @@
-import type { GameScreenProps } from '../types'
-import type { CardInfo } from '../gameUi'
-import { ActionButton, ActionChoices, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills } from '../gameStyles'
+import type { GameScreenProps } from '../../types'
+import type { CardInfo } from '../../gameUi'
+import { ActionButton, ActionChoices, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationChoice } from '../../gameStyles'
 
 function getDeclaredEffect(card: CardInfo) {
   switch (card.id) {
@@ -54,7 +54,7 @@ export function PlayCardActions({
 
   return (
     <ActionChoices>
-      <Choice>
+      <TruthfulDeclarationChoice>
         <ChoiceTitle>블러핑하지 않기</ChoiceTitle>
         <ActionButton
           type="button"
@@ -63,7 +63,7 @@ export function PlayCardActions({
         >
           {truthfulDeclarationLabel}
         </ActionButton>
-      </Choice>
+      </TruthfulDeclarationChoice>
       <Choice>
         <ChoiceTitle>블러핑하기 · 선언 카드 선택</ChoiceTitle>
         <Pills>

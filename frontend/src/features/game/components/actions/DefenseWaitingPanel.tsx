@@ -1,6 +1,6 @@
-import { getCard, getPlayerName } from '../gameUi'
-import type { GameScreenProps } from '../types'
-import { ActionChoices, Choice, ChoiceTitle, Pill, Pills } from '../gameStyles'
+import { getCard, getPlayerName } from '../../gameUi'
+import type { GameScreenProps } from '../../types'
+import { ActionChoices, Choice, ChoiceTitle, Pill, Pills } from '../../gameStyles'
 
 export function DefenseWaitingPanel({ game, mustDefend }: GameScreenProps) {
   const pending = game.pendingAction

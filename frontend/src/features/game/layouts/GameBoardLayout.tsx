@@ -1,9 +1,9 @@
 import { PlayField, Board } from '../gameStyles'
 import type { GameScreenProps } from '../types'
-import { BottomPlayerArea } from '../components/BottomPlayerArea'
-import { CenterInfoArea } from '../components/CenterInfoArea'
-import { GameActionArea } from '../components/GameActionArea'
-import { TurnIntroOverlay } from '../components/TurnIntroOverlay'
+import { BottomPlayerArea } from '../components/areas/BottomPlayerArea'
+import { CenterInfoArea } from '../components/areas/CenterInfoArea'
+import { GameActionArea } from '../components/actions/GameActionArea'
+import { TurnIntroOverlay } from '../components/overlays/TurnIntroOverlay'
 
 export function GameBoardLayout(props: GameScreenProps) {
   const { actions } = props

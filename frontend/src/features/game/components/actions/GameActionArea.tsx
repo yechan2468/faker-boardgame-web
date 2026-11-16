@@ -1,4 +1,4 @@
-import type { GameScreenProps } from '../types'
+import type { GameScreenProps } from '../../types'
 import { DefenseSelectionPanel } from './DefenseSelectionPanel'
 import { DefenseWaitingPanel } from './DefenseWaitingPanel'
 import { PlayCardActions } from './PlayCardActions'

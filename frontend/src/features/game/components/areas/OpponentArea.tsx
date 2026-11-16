@@ -1,4 +1,4 @@
-import type { GameState, PublicPlayer } from '../../../types/game'
+import type { GameState, PublicPlayer } from '../../../../types/game'
 import {
   Hearts,
   OpponentCard,
@@ -6,7 +6,7 @@ import {
   PlayerHealth,
   PlayerName,
   SmallCards,
-} from '../gameStyles'
+} from '../../gameStyles'
 
 type OpponentAreaProps = {
   game: GameState

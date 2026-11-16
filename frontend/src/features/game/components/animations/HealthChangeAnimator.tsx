@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
-import type { GameState } from '../../../types/game'
+import type { GameState } from '../../../../types/game'
 import { animateHealthChange, findPlayerHealth } from './healthAnimations'
 
 type HealthSnapshot = {

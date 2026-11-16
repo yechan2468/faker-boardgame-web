@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
-import { getCard, getCardLongEffect } from '../gameUi'
+import { getCard, getCardLongEffect } from '../../gameUi'
 
 const tooltipFadeIn = keyframes`
   from { opacity: 0; transform: translateY(0.25rem) scale(0.98); }
@@ -35,6 +35,7 @@ const TooltipDescription = styled.div`
   font-size: 0.83rem;
   font-weight: 600;
   overflow-wrap: anywhere;
+  white-space: pre-line;
 `
 
 type CursorPosition = { x: number; y: number }

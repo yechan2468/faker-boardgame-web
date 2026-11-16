@@ -1,5 +1,5 @@
-import { Brand, MenuButton, TopBar } from '../gameStyles'
-import type { GameScreenProps } from '../types'
+import { Brand, MenuButton, TopBar } from '../../gameStyles'
+import type { GameScreenProps } from '../../types'
 import { OpponentArea } from './OpponentArea'
 
 export function GameHeader({

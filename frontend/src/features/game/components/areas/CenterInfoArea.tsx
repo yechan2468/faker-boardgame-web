@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef, useState, type AnimationEvent } from 'react'
-import type { GameScreenProps } from '../types'
+import type { GameScreenProps } from '../../types'
 import {
   ActionButton,
   CardCornerValue,
@@ -20,9 +20,9 @@ import {
   SupplyValue,
   TableState,
   VerdictText,
-} from '../gameStyles'
-import { CardMascot } from './CardMascot'
-import { getCard, getCardEffectIcons, type DeclarationNotice } from '../gameUi'
+} from '../../gameStyles'
+import { CardMascot } from '../cards/CardMascot'
+import { getCard, getCardEffectIcons, type DeclarationNotice } from '../../gameUi'
 
 export function CenterInfoArea({
   game,

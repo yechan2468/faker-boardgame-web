@@ -1,6 +1,6 @@
-import { getCard, getPlayerName } from '../gameUi'
-import type { GameScreenProps } from '../types'
-import { ActionButton, ActionChoices, Choice, ChoiceTitle } from '../gameStyles'
+import { getCard, getPlayerName } from '../../gameUi'
+import type { GameScreenProps } from '../../types'
+import { ActionButton, ActionChoices, Choice, ChoiceTitle } from '../../gameStyles'
 
 export function SuspicionPanel(props: GameScreenProps) {
   const {

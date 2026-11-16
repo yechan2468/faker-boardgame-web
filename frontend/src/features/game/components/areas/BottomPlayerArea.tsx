@@ -1,5 +1,5 @@
 import { useLayoutEffect, useRef } from 'react'
-import type { GameScreenProps } from '../types'
+import type { GameScreenProps } from '../../types'
 import {
   BottomArea,
   CardCornerValue,
@@ -16,10 +16,10 @@ import {
   TurnOrderLabel,
   TurnOrderName,
   TurnOrderPreview,
-} from '../gameStyles'
-import { getCard, getCardEffectIcons } from '../gameUi'
-import { CardMascot } from './CardMascot'
-import { animateCardDraw, hideCardUntilDraw } from './cardAnimations'
+} from '../../gameStyles'
+import { getCard, getCardEffectIcons } from '../../gameUi'
+import { CardMascot } from '../cards/CardMascot'
+import { animateCardDraw, hideCardUntilDraw } from '../animations/cardAnimations'
 
 type DrawnCard = { cardId: string; occurrence: number }
 type CardPointer = { pointerId: number; startX: number; startY: number; moved: boolean }

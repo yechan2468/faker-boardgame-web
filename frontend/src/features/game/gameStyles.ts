@@ -363,6 +363,16 @@ export const Choice = styled.div<{ $center?: boolean }>`
   box-shadow: 0 2px 0 #79c6df, 0 5px 12px rgb(18 25 65 / 14%);
   text-align: center;
 `
+export const TruthfulDeclarationChoice = styled(Choice)`
+  display: grid;
+  grid-template-rows: auto 1fr;
+  justify-items: center;
+  align-items: start;
+
+  > button {
+    align-self: center;
+  }
+`
 export const ChoiceTitle = styled.div`
   margin-bottom: 0.45rem;
   color: #202124;

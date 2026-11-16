@@ -1,4 +1,4 @@
-import { TurnOverlay } from '../gameStyles'
+import { TurnOverlay } from '../../gameStyles'
 
 export function TurnIntroOverlay({
   currentTurnId,

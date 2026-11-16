@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { CardArtFrame } from '../gameStyles'
+import { CardArtFrame } from '../../gameStyles'
 
 type MascotStyle = {
   coat: string

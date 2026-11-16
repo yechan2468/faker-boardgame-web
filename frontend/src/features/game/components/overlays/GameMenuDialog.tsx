@@ -1,4 +1,4 @@
-import type { GameScreenProps } from '../types'
+import type { GameScreenProps } from '../../types'
 import {
   ChoiceTitle,
   Dialog,
@@ -10,7 +10,7 @@ import {
   MenuButton,
   SecondaryButton,
   Status,
-} from '../gameStyles'
+} from '../../gameStyles'
 
 export function GameMenuDialog({
   game,

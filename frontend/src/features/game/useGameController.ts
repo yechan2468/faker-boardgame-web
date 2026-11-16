@@ -1,25 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Client, type IMessage } from '@stomp/stompjs'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
+import type { GameState, PublicPlayer } from '../../types/game'
 import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
-import { animatePlayedCard } from './components/cardAnimations'
+import { createGameActions } from './gameActions'
+import { fetchGameState, fetchLeaderboard } from './gameQueries'
+import { getGameStatusText } from './gameStatusText'
 import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice, GameScreenProps } from './types'
 import { useGameConnection } from './useGameConnection'
-
-async function fetchGameState(): Promise<GameState> {
-  const response = await fetch('/api/game', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-  if (response.status === 401) throw new Error('AUTHENTICATION_REQUIRED')
-  if (!response.ok) throw new Error('게임 상태를 불러오지 못했습니다.')
-  return response.json() as Promise<GameState>
-}
-
-async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
-  const response = await fetch('/api/leaderboard', { credentials: 'same-origin' })
-  if (!response.ok) throw new Error('리더보드를 불러오지 못했습니다.')
-  return response.json() as Promise<LeaderboardEntry[]>
-}
+import { useGameTimers } from './useGameTimers'
 
 export type GameControllerResult =
   | { kind: 'loading' }
@@ -65,42 +54,13 @@ export function useGameController(): GameControllerResult {
   const currentTurnId = game?.turn.activePlayerId ?? null
   const viewerId = game?.viewerId ?? null
 
-  const [elapsedTurnSeconds, setElapsedTurnSeconds] = useState(0)
-  useEffect(() => {
-    if (gameStatus !== 'IN_GAME' || !currentTurnId || !viewerId || currentTurnId === viewerId) {
-      setElapsedTurnSeconds(0)
-      return
-    }
-
-    const turnStartedAt = performance.now()
-    setElapsedTurnSeconds(0)
-    const intervalId = window.setInterval(() => {
-      setElapsedTurnSeconds(Math.floor((performance.now() - turnStartedAt) / 1000))
-    }, 1000)
-
-    return () => window.clearInterval(intervalId)
-  }, [gameStatus, currentTurnId, game?.turn.number, viewerId])
-
-  const timedPhase = gameStatus === 'IN_GAME'
-    && ['SUSPICION', 'DEFENSE', 'DEFENSE_SUSPICION'].includes(game?.turn.phase ?? '')
-    ? game?.turn.phase ?? null
-    : null
-  const [elapsedPhaseSeconds, setElapsedPhaseSeconds] = useState(0)
-  useEffect(() => {
-    if (!timedPhase) {
-      setElapsedPhaseSeconds(0)
-      return
-    }
-
-    const phaseStartedAt = performance.now()
-    setElapsedPhaseSeconds(0)
-    const intervalId = window.setInterval(() => {
-      setElapsedPhaseSeconds(Math.floor((performance.now() - phaseStartedAt) / 1000))
-    }, 1000)
-
-    return () => window.clearInterval(intervalId)
-  }, [timedPhase, game?.turn.number])
-
+  const { elapsedTurn, elapsedPhase } = useGameTimers({
+    gameStatus,
+    currentTurnId,
+    viewerId,
+    turnNumber: game?.turn.number,
+    phase: game?.turn.phase,
+  })
   const showError = useCallback((message: string) => {
     setErrorMessage(message)
     window.clearTimeout(errorTimerRef.current)
@@ -192,53 +152,50 @@ export function useGameController(): GameControllerResult {
   )
   const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
   const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
-  const attackResolutionStatus = attackResolutionNotice
-    && game?.status === 'IN_GAME'
-    && game.turn.phase === 'RESOLVED'
-    && game.turn.activePlayerId === attackResolutionNotice.actorId
-    && game.turn.number === attackResolutionNotice.turnNumber
-    ? attackResolutionNotice.truthful
-      ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
-      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다.\n선언한 카드의 능력은 무효화됩니다.`
-    : null
-  const defenseOutcomeStatus = defenseOutcomeNotice
-    && game
-    && (game.status === 'IN_GAME' || game.matchResult)
-    && game.turn.phase === 'RESOLVED'
-    && game.turn.number === defenseOutcomeNotice.turnNumber
-    ? [
-        defenseOutcomeNotice.handlessPassers.length > 0
-          ? `${defenseOutcomeNotice.handlessPassers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님은 손패가 없어 방어하지 못해 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
-          : null,
-        defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).length > 0
-          ? `${defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
-          : null,
-        defenseOutcomeNotice.failedDefenders.length > 0
-          ? `${defenseOutcomeNotice.failedDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님의 방어가 거짓으로 밝혀져 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
-          : null,
-        defenseOutcomeNotice.successfulDefenders.length > 0
-          ? `${defenseOutcomeNotice.successfulDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어에 성공했습니다.`
-          : null,
-      ].filter((message): message is string => message !== null).join(' ')
-    : null
-  const alchemistResolutionStatus = alchemistResolutionNotice
-    && game?.status === 'IN_GAME'
-    && game.turn.phase === 'RESOLVED'
-    && game.turn.activePlayerId === alchemistResolutionNotice.actorId
-    && game.turn.number === alchemistResolutionNotice.turnNumber
-    ? `${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님이 체력 토큰 1개를 얻고, ${getPlayerName(game.players, alchemistResolutionNotice.actorId)} 님과 ${getPlayerName(game.players, alchemistResolutionNotice.targetId)} 님의 패가 교환되었습니다.`
-    : null
-  const defenseResolutionStatus = defenseResolutionNotice
-    && game?.status === 'IN_GAME'
-    && (game.turn.phase === 'DEFENSE_SUSPICION' || game.turn.phase === 'RESOLVED')
-    && game.turn.activePlayerId === defenseResolutionNotice.actorId
-    && game.turn.number === defenseResolutionNotice.turnNumber
-    ? defenseResolutionNotice.truthful
-      ? `잘못 의심한 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님의 방어 카드 능력이 그대로 적용됩니다.`
-      : `거짓이 발각되어 ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 방어 카드의 능력은 무효화됩니다.`
-    : null
+  const statusText = getGameStatusText({
+    game,
+    isMyTurn,
+    mustDefend,
+    errorMessage,
+    elapsedTurn,
+    elapsedPhase,
+    attackResolutionNotice,
+    defenseResolutionNotice,
+    defenseOutcomeNotice,
+    alchemistResolutionNotice,
+  })
   const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
   const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
+  const gameActions = createGameActions({
+    game,
+    self,
+    clientRef,
+    queryClient,
+    showError,
+    selectedHandIndex,
+    selectedCard,
+    selectedDeclaration,
+    targetId,
+    selectedDefenseType,
+    redirectTargetId,
+    hostActionPending,
+    setModalOpen,
+    setHostActionPending,
+    setSelectedHandIndex,
+    setSelectedDeclarationId,
+    setTargetId,
+    setSelectedDefenseType,
+    setRedirectTargetId,
+    messages: {
+      disconnected: '게임 서버에 연결되어 있지 않습니다.',
+      targetRequired: '대상을 선택해 주세요.',
+      redirectTargetRequired: '반사할 대상을 선택해 주세요.',
+      restartRequiresPlayers: '게임을 재시작하려면 플레이어가 2명 이상 필요합니다.',
+      startFailed: '게임을 시작하지 못했습니다.',
+      restartFailed: '게임을 재시작하지 못했습니다.',
+      endFailed: '게임을 종료하지 못했습니다.',
+    },
+  })
   const needsTarget = Boolean(selectedDeclaration?.target)
   const eligibleDeclarations = CARD_INFO
     .filter((card) => !['wizard', 'defender'].includes(card.id))
@@ -284,26 +241,6 @@ export function useGameController(): GameControllerResult {
           ? ` (대상: ${displayedDeclaration.targetIds.map((playerId) => getPlayerName(game?.players ?? [], playerId)).join(', ')})`
           : ''}`
     : null
-  const statusText = defenseOutcomeStatus
-    ?? defenseResolutionStatus
-    ?? alchemistResolutionStatus
-    ?? attackResolutionStatus
-    ?? (errorMessage
-    ? errorMessage
-    : game?.status !== 'IN_GAME'
-      ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
-      : game.turn.phase === 'DEFENSE'
-        ? mustDefend && pending
-          ? `${getPlayerName(game.players, pending.actorId)} 님의 공격을 받았습니다. 방어를 선택하세요. (${elapsedPhaseSeconds})`
-          : `공격 대상들이 방어를 선택하는 중입니다. (${elapsedPhaseSeconds})`
-        : game.turn.phase === 'SUSPICION'
-          ? `의심을 진행 중입니다. (${elapsedPhaseSeconds})`
-            : game.turn.phase === 'DEFENSE_SUSPICION'
-              ? `방어 선언을 의심하는 중입니다. (${elapsedPhaseSeconds})`
-              : isMyTurn
-            ? '나의 턴입니다'
-            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중... (${elapsedTurnSeconds})`)
-
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
     const wins = new Map((leaderboardQuery.data ?? []).map((entry) => [entry.playerId, entry.wins]))
@@ -312,123 +249,6 @@ export function useGameController(): GameControllerResult {
       .sort((left, right) => right.wins - left.wins || left.nickname.localeCompare(right.nickname, 'ko'))
   }, [game, leaderboardQuery.data])
 
-  const publish = (destination: string, body: unknown) => {
-    if (!clientRef.current?.connected) {
-      showError('게임 서버에 연결되어 있지 않습니다.')
-      return
-    }
-    clientRef.current.publish({ destination, body: JSON.stringify(body) })
-  }
-
-  const sendHostAction = (destination: string, failureMessage: string) => {
-    if (!game || self?.role !== 'HOST' || hostActionPending) return
-    setHostActionPending(true)
-    if (clientRef.current?.connected) {
-      clientRef.current.publish({ destination, body: '{}' })
-      window.setTimeout(() => setHostActionPending(false), 1200)
-      return
-    }
-
-    const expectedEvent = destination === '/app/game/end' ? 'MATCH_ENDED' : 'MATCH_STARTED'
-    let actionTimeout: number | undefined
-    let completed = false
-    const finishAction = () => {
-      if (completed) return
-      completed = true
-      window.clearTimeout(actionTimeout)
-      setHostActionPending(false)
-      void client.deactivate()
-    }
-    const client = new Client({
-      brokerURL: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
-      reconnectDelay: 0,
-      onConnect: () => {
-        client.subscribe('/topic/game', (message: IMessage) => {
-          const payload = JSON.parse(message.body) as { type?: string }
-          if (payload.type !== expectedEvent) return
-          void queryClient.invalidateQueries({ queryKey: ['game-state'] })
-          finishAction()
-        })
-        client.subscribe('/user/queue/errors', (message: IMessage) => {
-          const payload = JSON.parse(message.body) as { message?: string }
-          showError(payload.message || failureMessage)
-          finishAction()
-        })
-        client.publish({ destination, body: '{}' })
-      },
-      onStompError: (frame) => {
-        showError(frame.headers.message || failureMessage)
-        finishAction()
-      },
-      onWebSocketError: () => {
-        showError(failureMessage)
-        finishAction()
-      },
-    })
-    actionTimeout = window.setTimeout(() => {
-      showError(failureMessage)
-      finishAction()
-    }, 5000)
-    client.activate()
-  }
-
-  const startGame = () => sendHostAction('/app/game/start', '게임을 시작하지 못했습니다.')
-  const restartGame = () => {
-    if (!game) return
-    if (game.players.length < 2) {
-      showError('게임을 재시작하려면 플레이어가 2명 이상 필요합니다.')
-      return
-    }
-    setModalOpen(false)
-    sendHostAction('/app/game/restart', '게임을 재시작하지 못했습니다.')
-  }
-  const endGame = () => {
-    setModalOpen(false)
-    sendHostAction('/app/game/end', '게임을 종료하지 못했습니다.')
-  }
-
-  const submitBluff = () => {
-    if (!selectedCard || !selectedDeclaration || selectedHandIndex === null) return
-    if (selectedDeclaration.target && !targetId) {
-      showError('대상을 선택해 주세요.')
-      return
-    }
-    if (clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
-    publish('/app/game/bluff/submit', {
-      actualCardId: selectedCard.id,
-      declaredCardId: selectedDeclaration.id,
-      targetIds: targetId ? [targetId] : [],
-    })
-    setSelectedHandIndex(null)
-    setSelectedDeclarationId(null)
-    setTargetId(null)
-  }
-
-  const submitDefense = () => {
-    if (!selectedCard || !selectedDefenseType) return
-    if (selectedDefenseType === 'wizard' && !redirectTargetId) {
-      showError('반사할 대상을 선택해 주세요.')
-      return
-    }
-    if (selectedHandIndex !== null && clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
-    publish('/app/game/card/defend', {
-      actualCardId: selectedCard.id,
-      declaredCardId: selectedDefenseType,
-      redirectTargetId: selectedDefenseType === 'wizard' ? redirectTargetId : null,
-    })
-    setSelectedHandIndex(null)
-    setSelectedDefenseType(null)
-    setRedirectTargetId(null)
-  }
-
-  const passDefense = () => {
-    setSelectedHandIndex(null)
-    setSelectedDefenseType(null)
-    setRedirectTargetId(null)
-    publish('/app/game/card/pass-defense', {})
-  }
-  const passSuspicion = () => publish('/app/game/bluff/pass', {})
-  const submitTurnEnd = () => publish('/app/game/turn-end', {})
   const canAct = Boolean(isMyTurn && game?.turn.phase === 'START' && !pending)
   useEffect(() => {
     if (mustDefend && !previousMustDefendRef.current) {
@@ -514,15 +334,15 @@ export function useGameController(): GameControllerResult {
         setSelectedDefenseType,
         setRedirectTargetId,
         setSelectedHandIndex,
-        publish,
-        startGame,
-        restartGame,
-        endGame,
-        submitTurnEnd,
-        submitBluff,
-        passSuspicion,
-        submitDefense,
-        passDefense,
+        publish: gameActions.publish,
+        startGame: gameActions.startGame,
+        restartGame: gameActions.restartGame,
+        endGame: gameActions.endGame,
+        submitTurnEnd: gameActions.submitTurnEnd,
+        submitBluff: gameActions.submitBluff,
+        passSuspicion: gameActions.passSuspicion,
+        submitDefense: gameActions.submitDefense,
+        passDefense: gameActions.passDefense,
       },
     },
   }

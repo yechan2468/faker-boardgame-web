@@ -1,5 +1,5 @@
-import type { GameScreenProps } from '../types'
-import { ActionButton, ActionChoices, Choice, ChoiceTitle, Pill, Pills, SecondaryButton } from '../gameStyles'
+import type { GameScreenProps } from '../../types'
+import { ActionButton, ActionChoices, Choice, ChoiceTitle, Pill, Pills, SecondaryButton } from '../../gameStyles'
 
 export function DefenseSelectionPanel({
   selectedHandIndex,
