@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
-import ruleImage from '../../../../assets/rule.jpg'
+import ruleImage from '../../../../assets/image/rule.jpg'
 
 type Position = { x: number; y: number }
 type DragState = { pointerId: number; offsetX: number; offsetY: number }

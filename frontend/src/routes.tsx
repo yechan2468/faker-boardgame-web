@@ -46,6 +46,7 @@ const Button = styled.button`
 `
 const LinkButton = styled.button`
   margin-top: 1rem; border: 0; border-radius: .4rem; padding: .2rem .35rem; color: #202124; background: #d9f3fb; cursor: pointer; text-decoration: underline;
+  &:disabled { cursor: not-allowed; opacity: .5; }
 `
 
 async function getSession(): Promise<Session> {
@@ -63,7 +64,11 @@ function Loading() { return <Page><Card><Description>로그인 상태를 확인�
 function GameRoute() {
   const session = useSession()
   if (session.isLoading) return <Loading />
-  return session.data?.authenticated ? <GamePage /> : <Navigate to="/login" replace />
+  if (!session.data?.authenticated) return <Navigate to="/login" replace />
+  if (session.data.role === 'HOST' && !session.data.guestLoginEnabled) {
+    return <Navigate to="/admin" replace />
+  }
+  return <GamePage />
 }
 
 function LoginPage() {
@@ -165,7 +170,7 @@ function HostSetup({ guestLoginEnabled }: { guestLoginEnabled: boolean }) {
     setGuestPassword(''); setMessage('게스트 비밀번호를 저장했습니다.'); await queryClient.invalidateQueries({ queryKey: ['session'] })
   }
   async function logout() { await fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }); await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/admin', { replace: true }) }
-  return <Page><Card><Eyebrow>Faker · Host</Eyebrow><h1>게스트 입장 설정</h1><Description>참가자에게 공유할 비밀번호를 설정해 주세요.</Description>{message && <Notice $success>{message}</Notice>}{error && <Notice $error>{error}</Notice>}{guestLoginEnabled && <Notice>게스트가 입장할 수 있습니다. 비밀번호를 변경하면 이후 입장부터 새 비밀번호를 사용합니다.</Notice>}<Form onSubmit={save}><label htmlFor="guest-access-password">게스트 비밀번호</label><input id="guest-access-password" type="password" value={guestPassword} onChange={(event) => setGuestPassword(event.target.value)} autoComplete="new-password" required /><Button>{guestLoginEnabled ? '비밀번호 변경' : '비밀번호 설정'}</Button></Form><LinkButton onClick={logout}>호스트 로그아웃</LinkButton><br /><LinkButton onClick={() => navigate('/')}>게임 화면으로</LinkButton></Card></Page>
+  return <Page><Card><Eyebrow>Faker · Host</Eyebrow><h1>게스트 입장 설정</h1><Description>참가자에게 공유할 비밀번호를 설정해 주세요.</Description>{message && <Notice $success>{message}</Notice>}{error && <Notice $error>{error}</Notice>}{guestLoginEnabled ? <Notice>게스트가 입장할 수 있습니다. 비밀번호를 변경하면 이후 입장부터 새 비밀번호를 사용합니다.</Notice> : <Notice>게스트 비밀번호를 설정한 뒤 게임 화면에 입장할 수 있습니다.</Notice>}<Form onSubmit={save}><label htmlFor="guest-access-password">게스트 비밀번호</label><input id="guest-access-password" type="password" value={guestPassword} onChange={(event) => setGuestPassword(event.target.value)} autoComplete="new-password" required /><Button>{guestLoginEnabled ? '비밀번호 변경' : '비밀번호 설정'}</Button></Form><LinkButton onClick={logout}>호스트 로그아웃</LinkButton><br /><LinkButton disabled={!guestLoginEnabled} onClick={() => navigate('/')}>게임 화면으로</LinkButton></Card></Page>
 }
 
 function AdminPage() {
