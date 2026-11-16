@@ -33,7 +33,7 @@ const CARD_EFFECT_ICONS: Record<string, string> = {
   archer: '⚔️⚔️',
   bomber: '👥⚔️',
   'vampire-king': '👥🩸',
-  vampire: '🎯🩸',
+  vampire: '🩸',
   alchemist: '❤️⇄',
   'high-priest': '❤️❤️❤️',
   priest: '❤️❤️',

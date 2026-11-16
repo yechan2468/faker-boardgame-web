@@ -149,11 +149,11 @@ export const Supply = styled.div`
   text-align: center;
 `
 export const SupplyValue = styled.div`
-  color: #fff;
+  color: #ffc6df;
   font-size: 2rem;
   font-weight: 850;
   line-height: 1;
-  text-shadow: 0 2px 0 #14539a;
+  text-shadow: 0 2px 0 #6e214f;
 `
 export const Deck = styled.div`
   display: grid;
@@ -202,7 +202,7 @@ const sharedCardSurface = css<SharedCardProps>`
   color: #202124;
   isolation: isolate;
   background:
-    radial-gradient(ellipse at 17% 7%, rgb(255 255 255 / 58%) 0%, rgb(255 255 255 / 20%) 19%, transparent 42%),
+    radial-gradient(ellipse at var(--card-gloss-position, 17% 7%), rgb(255 255 255 / 58%) 0%, rgb(255 255 255 / 20%) 19%, transparent 42%),
     linear-gradient(145deg, rgb(255 255 255 / 13%) 0%, transparent 38%, rgb(20 45 95 / 9%) 100%),
     linear-gradient(155deg, #59c9ec 0%, #1ea9e0 100%);
   box-shadow: ${({ $selected }) => ($selected

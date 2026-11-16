@@ -10,7 +10,7 @@ export function GameBoardLayout(props: GameScreenProps) {
 
   return (
     <Board>
-      <PlayField>
+      <PlayField data-card-dropzone="center">
         <CenterInfoArea {...props} />
         {props.turnIntro && (
           <TurnIntroOverlay
