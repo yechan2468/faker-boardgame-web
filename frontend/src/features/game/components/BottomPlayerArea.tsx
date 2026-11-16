@@ -22,12 +22,25 @@ import { CardMascot } from './CardMascot'
 import { animateCardDraw, hideCardUntilDraw } from './cardAnimations'
 
 type DrawnCard = { cardId: string; occurrence: number }
+type CardPointer = { pointerId: number; startX: number; startY: number; moved: boolean }
 const DRAW_ANIMATION_DELAY_MS = 1000
 
 export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
   const handElement = useRef<HTMLDivElement>(null)
   const previousHand = useRef<string[]>([])
   const pendingDrawCards = useRef<DrawnCard[]>([])
+  const cardPointer = useRef<CardPointer | null>(null)
+  const suppressClick = useRef(false)
+
+  const resetCardActions = () => {
+    actions.setSelectedDeclarationId(null)
+    actions.setTargetId(null)
+  }
+
+  const selectDraggedCard = (index: number) => {
+    actions.setSelectedHandIndex(index)
+    resetCardActions()
+  }
 
   useLayoutEffect(() => {
     const previousCounts = new Map<string, number>()
@@ -95,12 +108,47 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
             <GameCard
               key={`${cardId}-${cardOccurrence}`}
               data-hand-index={index}
+              data-card-effect-id={card.id}
               type="button"
               $selected={selectedHandIndex === index}
+              onPointerDown={(event) => {
+                if (event.button !== 0) return
+                cardPointer.current = {
+                  pointerId: event.pointerId,
+                  startX: event.clientX,
+                  startY: event.clientY,
+                  moved: false,
+                }
+                event.currentTarget.setPointerCapture(event.pointerId)
+              }}
+              onPointerMove={(event) => {
+                const activePointer = cardPointer.current
+                if (!activePointer || activePointer.pointerId !== event.pointerId) return
+                if (Math.hypot(event.clientX - activePointer.startX, event.clientY - activePointer.startY) > 6) {
+                  activePointer.moved = true
+                }
+              }}
+              onPointerUp={(event) => {
+                const activePointer = cardPointer.current
+                if (!activePointer || activePointer.pointerId !== event.pointerId) return
+                cardPointer.current = null
+                if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+                  event.currentTarget.releasePointerCapture(event.pointerId)
+                }
+                if (activePointer.moved) {
+                  selectDraggedCard(index)
+                  suppressClick.current = true
+                  window.setTimeout(() => { suppressClick.current = false }, 0)
+                }
+              }}
+              onPointerCancel={() => { cardPointer.current = null }}
               onClick={() => {
+                if (suppressClick.current) {
+                  suppressClick.current = false
+                  return
+                }
                 actions.setSelectedHandIndex(selectedHandIndex === index ? null : index)
-                actions.setSelectedDeclarationId(null)
-                actions.setTargetId(null)
+                resetCardActions()
               }}
               aria-pressed={selectedHandIndex === index}
               draggable={false}

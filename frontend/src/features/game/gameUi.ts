@@ -30,20 +30,40 @@ const CARD_EFFECT_ICONS: Record<string, string> = {
   assassin: '⚔️⚔️⚔️',
   warlock: '💔⚔️⚔️⚔️',
   'red-dragon': '👥⚔️⚔️',
-  archer: '🎯⚔️⚔️',
+  archer: '⚔️⚔️',
   bomber: '👥⚔️',
   'vampire-king': '👥🩸',
   vampire: '🎯🩸',
-  alchemist: '❤️🔄',
+  alchemist: '❤️⇄',
   'high-priest': '❤️❤️❤️',
   priest: '❤️❤️',
-  wizard: '🪞',
+  wizard: '⮎',
   defender: '🛡️',
   clown: '🤡',
 }
 
 export function getCardEffectIcons(cardId: string) {
   return CARD_EFFECT_ICONS[cardId] ?? '✨'
+}
+
+const CARD_LONG_EFFECTS: Record<string, string> = {
+  assassin: '선택한 한 명에게 피해 3 ⚔️⚔️⚔️을 줍니다.\n방패병으로 무효화🛡️하거나 마법사로 반사⮎할 수 있습니다.',
+  warlock: '자신의 체력 1을 잃고 💔, 선택한 한 명에게 피해 3 ⚔️⚔️⚔️을 줍니다.',
+  'red-dragon': '자신을 제외한 👥모든 생존 플레이어에게 피해 2 ⚔️⚔️를 줍니다.\n각 대상은 개별적으로 방어🛡️⮎할 수 있습니다.',
+  archer: '선택한 한 명에게 피해 2 ⚔️⚔️를 줍니다.\n방패병으로 무효화🛡️하거나 마법사로 반사⮎할 수 있습니다.',
+  bomber: '자신을 제외한 👥모든 생존 플레이어에게 피해 1 ⚔️을 줍니다.\n각 대상은 개별적으로 방어🛡️⮎할 수 있습니다.',
+  'vampire-king': '자신을 제외한 👥모든 생존 플레이어의 체력을 1씩 흡혈🩸하여 체력을 빼앗아 얻습니다.',
+  vampire: '선택한 한 명의 체력을 1 흡혈🩸하여 체력을 빼앗아 얻습니다.',
+  alchemist: '필드에 남은 체력 토큰이 있다면 1개를 회복❤️하고, 선택한 대상과 남은 손패를 서로 교환⇄합니다.\n이 교환은 방어🛡️⮎ 카드로 막을 수 없습니다.',
+  'high-priest': '체력을 최대 3 회복❤️❤️❤️합니다. 필드에 남은 토큰만 가져올 수 있습니다.',
+  priest: '체력을 최대 2 회복❤️❤️합니다. 필드에 남은 토큰만 가져올 수 있습니다.',
+  wizard: '받은 공격을 공격자나 다른 플레이어에게 반사⮎합니다.\n반사된 공격의 새 대상도 방어🛡️⮎할 수 있습니다.',
+  defender: '받은 공격의 효과를 무효화🛡️합니다.',
+  clown: '능력이 없습니다. 광대를 낸 경우에는 무조건 다른 능력 카드로 선언해 블러핑해야 합니다.',
+}
+
+export function getCardLongEffect(cardId: string) {
+  return CARD_LONG_EFFECTS[cardId] ?? '이 카드의 효과 정보가 없습니다.'
 }
 
 export type DeclarationNotice = {

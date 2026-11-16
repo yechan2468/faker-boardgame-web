@@ -104,7 +104,7 @@ export const Hearts = styled.span<{ $small?: boolean }>`
   gap: 0.12rem;
   color: #fff;
   font-size: ${({ $small }) => ($small ? '0.72rem' : '1rem')};
-  letter-spacing: -0.08em;
+  letter-spacing: 0.12em;
   text-shadow: 0 1px 0 rgb(255 255 255 / 35%);
 `
 export const SmallCards = styled.div`
@@ -518,6 +518,9 @@ export const GameCard = styled.button<{ $selected: boolean }>`
     animation: ${liftSelectedCard} 260ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
   `}
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
   transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
   &:hover {
     transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'translateY(-0.35rem)')};

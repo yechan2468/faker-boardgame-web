@@ -65,6 +65,42 @@ export function useGameController(): GameControllerResult {
   const currentTurnId = game?.turn.activePlayerId ?? null
   const viewerId = game?.viewerId ?? null
 
+  const [elapsedTurnSeconds, setElapsedTurnSeconds] = useState(0)
+  useEffect(() => {
+    if (gameStatus !== 'IN_GAME' || !currentTurnId || !viewerId || currentTurnId === viewerId) {
+      setElapsedTurnSeconds(0)
+      return
+    }
+
+    const turnStartedAt = performance.now()
+    setElapsedTurnSeconds(0)
+    const intervalId = window.setInterval(() => {
+      setElapsedTurnSeconds(Math.floor((performance.now() - turnStartedAt) / 1000))
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [gameStatus, currentTurnId, game?.turn.number, viewerId])
+
+  const timedPhase = gameStatus === 'IN_GAME'
+    && ['SUSPICION', 'DEFENSE', 'DEFENSE_SUSPICION'].includes(game?.turn.phase ?? '')
+    ? game?.turn.phase ?? null
+    : null
+  const [elapsedPhaseSeconds, setElapsedPhaseSeconds] = useState(0)
+  useEffect(() => {
+    if (!timedPhase) {
+      setElapsedPhaseSeconds(0)
+      return
+    }
+
+    const phaseStartedAt = performance.now()
+    setElapsedPhaseSeconds(0)
+    const intervalId = window.setInterval(() => {
+      setElapsedPhaseSeconds(Math.floor((performance.now() - phaseStartedAt) / 1000))
+    }, 1000)
+
+    return () => window.clearInterval(intervalId)
+  }, [timedPhase, game?.turn.number])
+
   const showError = useCallback((message: string) => {
     setErrorMessage(message)
     window.clearTimeout(errorTimerRef.current)
@@ -163,7 +199,7 @@ export function useGameController(): GameControllerResult {
     && game.turn.number === attackResolutionNotice.turnNumber
     ? attackResolutionNotice.truthful
       ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
-      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 선언한 카드의 능력은 무효화됩니다.`
+      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다.\n선언한 카드의 능력은 무효화됩니다.`
     : null
   const defenseOutcomeStatus = defenseOutcomeNotice
     && game
@@ -258,15 +294,15 @@ export function useGameController(): GameControllerResult {
       ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
       : game.turn.phase === 'DEFENSE'
         ? mustDefend && pending
-          ? `${getPlayerName(game.players, pending.actorId)} 님의 공격을 받았습니다. 방어를 선택하세요.`
-          : '공격 대상들이 방어를 선택하는 중입니다.'
+          ? `${getPlayerName(game.players, pending.actorId)} 님의 공격을 받았습니다. 방어를 선택하세요. (${elapsedPhaseSeconds})`
+          : `공격 대상들이 방어를 선택하는 중입니다. (${elapsedPhaseSeconds})`
         : game.turn.phase === 'SUSPICION'
-          ? '의심을 진행 중입니다.'
+          ? `의심을 진행 중입니다. (${elapsedPhaseSeconds})`
             : game.turn.phase === 'DEFENSE_SUSPICION'
-              ? '방어 선언을 의심하는 중입니다.'
+              ? `방어 선언을 의심하는 중입니다. (${elapsedPhaseSeconds})`
               : isMyTurn
             ? '나의 턴입니다'
-            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중...`)
+            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중... (${elapsedTurnSeconds})`)
 
   const modalLeaderboard = useMemo(() => {
     if (!game) return []

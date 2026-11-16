@@ -112,6 +112,7 @@ export function CenterInfoArea({
             )}
             <DeclaredCard
               data-declared-card="true"
+              data-card-effect-id={visibleCard?.id}
               $truthful={displayedDeclaration?.truthful ?? null}
               $flipPhase={flipPhase}
               onAnimationEnd={handleFlipAnimationEnd}
