@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Client, type IMessage } from '@stomp/stompjs'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
@@ -52,6 +53,7 @@ export function useGameController(): GameControllerResult {
   const [hostActionPending, setHostActionPending] = useState(false)
   const errorTimerRef = useRef<number | undefined>(undefined)
   const previousTurnRef = useRef<string | null>(null)
+  const previousMustDefendRef = useRef(false)
   const previousGameStatusRef = useRef<string | null>(null)
   const game = gameQuery.data
   const pending = game?.pendingAction ?? null
@@ -303,6 +305,14 @@ export function useGameController(): GameControllerResult {
     pending && pending.targetIds.includes(game.viewerId ?? '') &&
     !pending.defensePasses.includes(game.viewerId ?? ''),
   )
+  useEffect(() => {
+    if (mustDefend && !previousMustDefendRef.current) {
+      setSelectedHandIndex(null)
+      setSelectedDefenseType(null)
+      setRedirectTargetId(null)
+    }
+    previousMustDefendRef.current = mustDefend
+  }, [mustDefend])
   const hasDefenderCard = hand.includes('defender')
   const hasWizardCard = hand.includes('wizard')
   const redirectTargets = opponents.filter((player) => player.alive && !pending?.targetIds.includes(player.id))

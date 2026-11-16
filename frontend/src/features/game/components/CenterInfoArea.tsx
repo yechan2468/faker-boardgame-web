@@ -18,6 +18,7 @@ import {
   TableState,
   VerdictText,
 } from '../gameStyles'
+import { CardMascot } from './CardMascot'
 
 export function CenterInfoArea({
   game,
@@ -51,6 +52,7 @@ export function CenterInfoArea({
               </VerdictText>
             )}
             <DeclaredCard $truthful={displayedDeclaration?.truthful ?? null}>
+              {displayedCard && <CardMascot cardId={displayedCard.id} />}
               <DeclaredCardName>{displayedCard?.ko ?? '선언 대기'}</DeclaredCardName>
               <DeclaredCardEnglish>{displayedCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>

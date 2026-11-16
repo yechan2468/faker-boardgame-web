@@ -2,18 +2,15 @@ import type { GameScreenProps } from '../types'
 import { ActionButton, ActionChoices, Choice, ChoiceTitle, Pill, Pills, SecondaryButton } from '../gameStyles'
 
 export function DefenseSelectionPanel({
-  game,
-  hand,
   selectedHandIndex,
+  selectedCard,
   selectedDefenseType,
   redirectTargetId,
   mustDefend,
-  hasDefenderCard,
-  hasWizardCard,
   redirectTargets,
   actions,
 }: GameScreenProps) {
-  if (!mustDefend) return null
+  if (!mustDefend || selectedHandIndex === null || !selectedCard) return null
 
   return (
     <ActionChoices>
@@ -23,7 +20,6 @@ export function DefenseSelectionPanel({
           <Pill
             type="button"
             $selected={selectedDefenseType === 'defender'}
-            disabled={!hasDefenderCard}
             onClick={() => {
               actions.setSelectedDefenseType('defender')
               actions.setRedirectTargetId(null)
@@ -34,7 +30,6 @@ export function DefenseSelectionPanel({
           <Pill
             type="button"
             $selected={selectedDefenseType === 'wizard'}
-            disabled={!hasWizardCard}
             onClick={() => {
               actions.setSelectedDefenseType('wizard')
               actions.setRedirectTargetId(null)
@@ -52,7 +47,6 @@ export function DefenseSelectionPanel({
                   key={player.id}
                   type="button"
                   $selected={redirectTargetId === player.id}
-                  disabled={!hasWizardCard}
                   onClick={() => actions.setRedirectTargetId(player.id)}
                   aria-pressed={redirectTargetId === player.id}
                 >
@@ -65,12 +59,14 @@ export function DefenseSelectionPanel({
         <ActionButton
           type="button"
           onClick={actions.submitDefense}
-          disabled={!selectedDefenseType || !hand.includes(selectedDefenseType) || selectedHandIndex === null || (selectedDefenseType === 'wizard' && !redirectTargetId)}
+          disabled={!selectedDefenseType || (selectedDefenseType === 'wizard' && !redirectTargetId)}
         >
-          선택한 카드로 방어
+          {!selectedDefenseType || selectedCard.id === selectedDefenseType
+            ? '선택한 카드로 방어'
+            : '방어 카드인 것처럼 속이기'}
         </ActionButton>
-        <SecondaryButton type="button" $danger={!hasDefenderCard && !hasWizardCard} onClick={actions.passDefense}>
-          {!hasDefenderCard && !hasWizardCard ? '방어 불가능' : '방어하지 않기'}
+        <SecondaryButton type="button" onClick={actions.passDefense}>
+          방어하지 않기
         </SecondaryButton>
       </Choice>
     </ActionChoices>

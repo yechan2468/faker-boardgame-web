@@ -15,15 +15,16 @@ import {
   TurnOrderPreview,
 } from '../gameStyles'
 import { getCard } from '../gameUi'
+import { CardMascot } from './CardMascot'
 
 export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, actions }: GameScreenProps) {
   return (
     <BottomArea>
       <OwnIdentity>
         <OwnName>{self?.nickname ?? '나'}</OwnName>
-        <PlayerHealth>
+        <PlayerHealth $small>
           <span>{self?.health ?? 0}</span>
-          <Hearts>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
+          <Hearts $small>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
         </PlayerHealth>
       </OwnIdentity>
       <Hand aria-label="내 카드 패">
@@ -39,6 +40,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, a
               aria-pressed={selectedHandIndex === index}
               draggable={false}
             >
+              <CardMascot cardId={card.id} large />
               <CardKorean>{card.ko}</CardKorean>
               <CardEnglish>{card.en}</CardEnglish>
             </GameCard>

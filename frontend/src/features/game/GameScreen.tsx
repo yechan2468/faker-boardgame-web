@@ -9,7 +9,7 @@ export default function GameScreen(props: GameScreenProps) {
 
   return (
     <Page onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()}>
-      <GameHeader onOpenMenu={() => actions.setModalOpen(true)} />
+      <GameHeader {...props} onOpenMenu={() => actions.setModalOpen(true)} />
       <GameBoardLayout {...props} />
       <GameMenuDialog {...props} />
     </Page>

@@ -13,35 +13,39 @@ interface Session {
 }
 
 const Page = styled.main`
-  display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; color: #eaf3ff;
-  background: radial-gradient(ellipse at 50% 20%, #203f69 0%, #122844 48%, #0b172a 100%);
+  display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; color: #fff;
+  background: radial-gradient(ellipse at 50% 28%, #34499a 0%, #29387c 55%, #202d69 100%);
 `
 const Card = styled.section`
-  width: min(100%, 28rem); padding: 2rem; border: 1px solid #57769c; border-radius: 1rem;
-  background: #102843; box-shadow: 0 1.2rem 3rem rgba(0, 0, 0, 0.25);
+  width: min(100%, 28rem); padding: 2rem; border: 1px solid #1ea9e0; border-radius: 1.1rem;
+  color: #202124; background: linear-gradient(155deg, #d9f3fb, #bceafa);
+  box-shadow: 0 2px 0 #79c6df, 0 1rem 2.5rem rgb(18 25 65 / 24%);
   h1 { margin: .25rem 0 .8rem; font-size: 1.6rem; }
 `
 const Eyebrow = styled.p`
-  margin: 0; color: #9bc9ff; font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  margin: 0; color: #202124; font-size: .75rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
 `
-const Description = styled.p`margin: 0 0 1.5rem; color: #bbcee2; line-height: 1.5;`
+const Description = styled.p`margin: 0 0 1.5rem; color: #202124; line-height: 1.5;`
 const Notice = styled.p<{ $error?: boolean; $success?: boolean }>`
-  margin: 0 0 1rem; padding: .75rem; border-radius: .6rem;
-  color: ${({ $error, $success }) => ($error ? '#ffd1d1' : $success ? '#b9f3d0' : '#d4e8ff')};
-  background: ${({ $error, $success }) => ($error ? '#652e3a' : $success ? '#235b46' : '#1c3b5d')};
+  margin: 0 0 1rem; padding: .8rem; border: 1px solid ${({ $error, $success }) => ($error ? '#e79595' : $success ? '#9abd69' : '#1ea9e0')}; border-radius: .7rem;
+  color: #202124;
+  background: ${({ $error, $success }) => ($error ? '#ffe0e0' : $success ? '#ebf6d9' : '#d9f3fb')};
 `
 const Form = styled.form`
   display: grid; gap: .65rem;
-  label { font-weight: 700; }
-  input { width: 100%; border: 1px solid #57769c; border-radius: .55rem; padding: .7rem; color: #edf5ff; background: #0b1c31; }
+  label { color: #202124; font-weight: 700; }
+  input { width: 100%; border: 1px solid #1ea9e0; border-radius: .55rem; padding: .7rem; color: #202124; background: #f8fdff; }
   button { margin-top: .45rem; }
 `
 const Button = styled.button`
-  border: 0; border-radius: .6rem; padding: .75rem 1rem; color: #061323; background: #9bc9ff; font-weight: 800; cursor: pointer;
+  border: 1px solid #6e214f; border-radius: .7rem; padding: .75rem 1rem; color: #fff;
+  background: linear-gradient(180deg, #a43d78, #972e67); box-shadow: 0 2px 0 #6e214f;
+  font-weight: 800; cursor: pointer;
+  &:hover { background: linear-gradient(180deg, #b54b88, #972e67); }
   &:disabled { cursor: not-allowed; opacity: .5; }
 `
 const LinkButton = styled.button`
-  margin-top: 1rem; border: 0; padding: 0; color: #a8d0ff; background: transparent; cursor: pointer; text-decoration: underline;
+  margin-top: 1rem; border: 0; border-radius: .4rem; padding: .2rem .35rem; color: #202124; background: #d9f3fb; cursor: pointer; text-decoration: underline;
 `
 
 async function getSession(): Promise<Session> {
