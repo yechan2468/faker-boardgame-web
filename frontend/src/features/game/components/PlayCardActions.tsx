@@ -48,7 +48,9 @@ export function PlayCardActions({
       ? '마법사로 선언 불가 (마법사는 방어 용도)'
       : selectedCard.id === 'defender'
         ? '방패병으로 선언 불가 (방패병은 방어 용도)'
-        : `${selectedCard.ko}로 선언`
+        : ['vampire-king', 'red-dragon', 'bomber'].includes(selectedCard.id)
+          ? `${selectedCard.ko}으로 선언`
+          : `${selectedCard.ko}로 선언`
 
   return (
     <ActionChoices>

@@ -3,6 +3,7 @@ import type { GameScreenProps } from '../types'
 import {
   BottomArea,
   CardCornerValue,
+  CardEffectIcons,
   CardEnglish,
   CardKorean,
   GameCard,
@@ -16,9 +17,9 @@ import {
   TurnOrderName,
   TurnOrderPreview,
 } from '../gameStyles'
-import { getCard } from '../gameUi'
+import { getCard, getCardEffectIcons } from '../gameUi'
 import { CardMascot } from './CardMascot'
-import { animateCardDraw } from './cardAnimations'
+import { animateCardDraw, hideCardUntilDraw } from './cardAnimations'
 
 type DrawnCard = { cardId: string; occurrence: number }
 const DRAW_ANIMATION_DELAY_MS = 1000
@@ -43,13 +44,31 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
     if (hand.length === 0) pendingDrawCards.current = []
     if (turnIntro) {
       pendingDrawCards.current.push(...drawnCards)
+      drawnCards.forEach(({ cardId, occurrence }) => {
+        let seen = 0
+        const index = hand.findIndex((id) => id === cardId && seen++ === occurrence)
+        const card = handElement.current?.querySelector<HTMLElement>(`[data-hand-index="${index}"]`)
+        if (index >= 0 && card) hideCardUntilDraw(card)
+      })
       return
     }
 
     const cardsToAnimate = [...pendingDrawCards.current, ...drawnCards]
-    pendingDrawCards.current = []
     const deck = document.querySelector<HTMLElement>('[data-deck-source]')
-    if (!deck) return
+    if (!deck) {
+      cardsToAnimate.forEach(({ cardId, occurrence }) => {
+        let seen = 0
+        const index = hand.findIndex((id) => id === cardId && seen++ === occurrence)
+        const card = handElement.current?.querySelector<HTMLElement>(`[data-hand-index="${index}"]`)
+        if (card) {
+          card.style.opacity = ''
+          card.style.pointerEvents = ''
+        }
+      })
+      pendingDrawCards.current = []
+      return
+    }
+    pendingDrawCards.current = []
     cardsToAnimate.forEach(({ cardId, occurrence }, order) => {
       let seen = 0
       const index = hand.findIndex((id) => id === cardId && seen++ === occurrence)
@@ -89,6 +108,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
               <CardCornerValue aria-hidden="true" $corner="top-left">{14 - card.value}</CardCornerValue>
               <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - card.value}</CardCornerValue>
               <CardMascot cardId={card.id} large />
+              <CardEffectIcons aria-hidden="true">{getCardEffectIcons(card.id)}</CardEffectIcons>
               <CardKorean>{card.ko}</CardKorean>
               <CardEnglish>{card.en}</CardEnglish>
             </GameCard>

@@ -189,7 +189,9 @@ type SharedCardProps = {
 const sharedCardSurface = css<SharedCardProps>`
   position: relative;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto auto auto;
+  align-content: center;
+  row-gap: 0.2rem;
   justify-items: center;
   align-items: center;
   width: clamp(6.3rem, 11vw, 8rem);
@@ -284,7 +286,7 @@ export const DeclaredCardName = styled.div`
   font-size: clamp(0.88rem, 1.5vw, 1.15rem);
   font-weight: 900;
   line-height: 1.2;
-  transform: translateY(1rem);
+  transform: translateY(0.25rem);
 `
 export const DeclaredCardEnglish = styled.div`
   color: #202d69;
@@ -494,6 +496,14 @@ export const CardArtFrame = styled.div<{ $large?: boolean }>`
   height: ${({ $large }) => ($large ? 'clamp(5.2rem, 10vh, 6.4rem)' : 'clamp(3.8rem, 7vh, 4.4rem)')};
   svg { display: block; width: 100%; height: 100%; overflow: visible; }
 `
+export const CardEffectIcons = styled.span`
+  min-height: 1rem;
+  color: #202d69;
+  font-size: clamp(0.78rem, 1.2vw, 0.98rem);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+`
 export const GameCard = styled.button<{ $selected: boolean }>`
   ${sharedCardSurface}
   width: clamp(7.5rem, 13vw, 10rem);
@@ -520,7 +530,7 @@ export const CardKorean = styled.span`
   font-size: clamp(1rem, 1.7vw, 1.3rem);
   font-weight: 900;
   line-height: 1.2;
-  transform: translateY(1rem);
+  transform: translateY(0.25rem);
 `
 export const CardEnglish = styled.span`
   color: #202d69;

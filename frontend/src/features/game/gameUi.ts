@@ -26,6 +26,26 @@ export const CARD_INFO: readonly CardInfo[] = [
   { id: 'clown', ko: '광대', en: 'Clown', target: false, value: 1 },
 ]
 
+const CARD_EFFECT_ICONS: Record<string, string> = {
+  assassin: '⚔️⚔️⚔️',
+  warlock: '💔⚔️⚔️⚔️',
+  'red-dragon': '👥⚔️⚔️',
+  archer: '🎯⚔️⚔️',
+  bomber: '👥⚔️',
+  'vampire-king': '👥🩸',
+  vampire: '🎯🩸',
+  alchemist: '❤️🔄',
+  'high-priest': '❤️❤️❤️',
+  priest: '❤️❤️',
+  wizard: '🪞',
+  defender: '🛡️',
+  clown: '🤡',
+}
+
+export function getCardEffectIcons(cardId: string) {
+  return CARD_EFFECT_ICONS[cardId] ?? '✨'
+}
+
 export type DeclarationNotice = {
   playerId: string
   declaredCardId: string

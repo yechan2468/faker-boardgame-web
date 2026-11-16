@@ -2,17 +2,27 @@ function prefersReducedMotion() {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches
 }
 
+function canAnimateCardDraw() {
+  return !prefersReducedMotion() && typeof Element.prototype.animate === 'function'
+}
+
 function getCenter(rect: DOMRect) {
   return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
 }
 
 export function animateCardDraw(card: HTMLElement, deck: HTMLElement, delay = 0) {
-  if (prefersReducedMotion() || typeof card.animate !== 'function') return
+  if (!canAnimateCardDraw() || typeof card.animate !== 'function') {
+    card.style.opacity = ''
+    card.style.pointerEvents = ''
+    return
+  }
 
   const cardRect = card.getBoundingClientRect()
   const deckRect = deck.getBoundingClientRect()
   const cardCenter = getCenter(cardRect)
   const deckCenter = getCenter(deckRect)
+  card.style.opacity = '0'
+  card.style.pointerEvents = 'none'
   const animation = card.animate(
     [
       {
@@ -28,7 +38,21 @@ export function animateCardDraw(card: HTMLElement, deck: HTMLElement, delay = 0)
       fill: 'backwards',
     },
   )
-  animation.onfinish = () => animation.cancel()
+  animation.onfinish = () => {
+    animation.cancel()
+    card.style.opacity = ''
+    card.style.pointerEvents = ''
+  }
+  animation.oncancel = () => {
+    card.style.opacity = ''
+    card.style.pointerEvents = ''
+  }
+}
+
+export function hideCardUntilDraw(card: HTMLElement) {
+  if (!canAnimateCardDraw()) return
+  card.style.opacity = '0'
+  card.style.pointerEvents = 'none'
 }
 
 export function animatePlayedCard(handIndex: number) {

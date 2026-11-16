@@ -3,6 +3,7 @@ import type { GameScreenProps } from '../types'
 import {
   ActionButton,
   CardCornerValue,
+  CardEffectIcons,
   CenterContent,
   Deck,
   DeckCount,
@@ -21,7 +22,7 @@ import {
   VerdictText,
 } from '../gameStyles'
 import { CardMascot } from './CardMascot'
-import { getCard, type DeclarationNotice } from '../gameUi'
+import { getCard, getCardEffectIcons, type DeclarationNotice } from '../gameUi'
 
 export function CenterInfoArea({
   game,
@@ -102,7 +103,7 @@ export function CenterInfoArea({
           </Supply>
           <DeclarationPanel>
             <DeclarationText>
-              {displayedDeclarationLabel ? displayedDeclarationLabel : '아직 카드 선언이 없습니다.'}
+              {displayedDeclarationLabel ? displayedDeclarationLabel : '아직 카드 선언을 하지 않았습니다.'}
             </DeclarationText>
             {displayedDeclaration && displayedCard && displayedDeclaration.truthful !== null && (
               <VerdictText $truthful={displayedDeclaration.truthful}>
@@ -122,6 +123,7 @@ export function CenterInfoArea({
                 </>
               )}
               {visibleCard && <CardMascot cardId={visibleCard.id} />}
+              {visibleCard && <CardEffectIcons aria-hidden="true">{getCardEffectIcons(visibleCard.id)}</CardEffectIcons>}
               <DeclaredCardName>{visibleCard?.ko ?? '선언 대기'}</DeclaredCardName>
               <DeclaredCardEnglish>{visibleCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>
