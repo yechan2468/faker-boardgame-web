@@ -1,0 +1,46 @@
+{
+  "name": "faker-blue-frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=20.19.0"
+  },
+  "scripts": {
+    "dev": "vite",
+    "start": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1",
+    "stop": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/stop.ps1",
+    "status": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/status.ps1",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@stomp/stompjs": "^7.5.0",
+    "@tanstack/react-query": "^5.107.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "7.18.5",
+    "styled-components": "^6.6.0"
+  },
+  "devDependencies": {
+    "@eslint-react/eslint-plugin": "^5.30.2",
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.19.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.2",
+    "vite": "^8.3.6"
+  }
+}
