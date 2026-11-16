@@ -47,7 +47,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, a
     <BottomArea>
       <OwnIdentity>
         <OwnName>{self?.nickname ?? '나'}</OwnName>
-        <PlayerHealth $small>
+        <PlayerHealth data-player-health-id={self?.id} $small>
           <span>{self?.health ?? 0}</span>
           <Hearts $small>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
         </PlayerHealth>

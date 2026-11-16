@@ -43,7 +43,7 @@ export function OpponentArea({
           aria-pressed={targetId === player.id}
         >
           <PlayerName>{player.nickname}</PlayerName>
-          <PlayerHealth $small>
+          <PlayerHealth data-player-health-id={player.id} $small>
             <span>{player.health}</span>
             <Hearts $small>{'♥'.repeat(Math.max(0, player.health))}</Hearts>
           </PlayerHealth>

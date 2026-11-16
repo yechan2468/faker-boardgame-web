@@ -72,6 +72,7 @@ export function useGameConnection({
                 playerId,
                 declaredCardId: payload.declaredCardId,
                 truthful: payload.truthful,
+                actualCardId: typeof payload.actualCardId === 'string' ? payload.actualCardId : null,
               })
             }
             if (

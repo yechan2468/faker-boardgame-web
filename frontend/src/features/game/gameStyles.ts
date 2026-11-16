@@ -178,6 +178,7 @@ export const DeclarationPanel = styled.div`
   min-width: 0;
   width: 100%;
   text-align: center;
+  perspective: 900px;
 `
 
 type SharedCardProps = {
@@ -215,8 +216,42 @@ export const VerdictText = styled.div<{ $truthful: boolean }>`
   font-weight: 800;
   line-height: 1.3;
 `
-export const DeclaredCard = styled.div<{ $truthful: boolean | null }>`
+const flipCardAway = keyframes`
+  from { transform: rotateY(0deg); }
+  to { transform: rotateY(90deg); }
+`
+const flipCardBack = keyframes`
+  from { transform: rotateY(90deg); }
+  to { transform: rotateY(0deg); }
+`
+const revealCardWobble = keyframes`
+  0% { transform: rotate(0deg) scale(1); }
+  12% { transform: rotate(-8deg) scale(1.08); }
+  25% { transform: rotate(7deg) scale(0.96); }
+  40% { transform: rotate(-6deg) scale(1.06); }
+  55% { transform: rotate(5deg) scale(0.98); }
+  70% { transform: rotate(-3deg) scale(1.035); }
+  85% { transform: rotate(2deg) scale(1.01); }
+  100% { transform: rotate(0deg) scale(1); }
+`
+
+export const DeclaredCard = styled.div<{
+  $truthful: boolean | null
+  $flipPhase?: 'hide' | 'reveal' | 'wobble' | null
+}>`
   ${sharedCardSurface}
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  ${({ $flipPhase }) => $flipPhase === 'hide' && css`
+    animation: ${flipCardAway} 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  `}
+  ${({ $flipPhase }) => $flipPhase === 'reveal' && css`
+    animation: ${flipCardBack} 220ms cubic-bezier(0, 0, 0.2, 1) forwards;
+  `}
+  ${({ $flipPhase }) => $flipPhase === 'wobble' && css`
+    animation: ${revealCardWobble} 680ms cubic-bezier(0.3, 0, 0.5, 1) both;
+  `}
+  @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const DeclaredCardName = styled.div`
   color: #202124;

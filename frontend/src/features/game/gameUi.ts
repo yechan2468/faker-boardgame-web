@@ -27,6 +27,7 @@ export type DeclarationNotice = {
   playerId: string
   declaredCardId: string
   truthful: boolean | null
+  actualCardId?: string | null
 }
 
 export function getCard(id: string): CardInfo {

@@ -171,12 +171,14 @@ export function useGameController(): GameControllerResult {
         playerId: activeDefenseDeclaration.playerId,
         declaredCardId: activeDefenseDeclaration.declaredCardId,
         truthful: activeDefenseDeclaration.truthful,
+        actualCardId: activeDefenseDeclaration.actualCardId,
       }
     : pending
       ? {
           playerId: pending.actorId,
           declaredCardId: pending.declaredCardId,
           truthful: pending.attackerTruthful,
+          actualCardId: pending.attackerActualCardId,
         }
       : null
   const displayedDeclaration = declarationNotice ?? pendingDeclarationNotice

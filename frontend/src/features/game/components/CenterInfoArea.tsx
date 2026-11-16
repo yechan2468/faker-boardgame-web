@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState, type AnimationEvent } from 'react'
 import type { GameScreenProps } from '../types'
 import {
   ActionButton,
@@ -19,6 +20,7 @@ import {
   VerdictText,
 } from '../gameStyles'
 import { CardMascot } from './CardMascot'
+import { getCard, type DeclarationNotice } from '../gameUi'
 
 export function CenterInfoArea({
   game,
@@ -33,6 +35,61 @@ export function CenterInfoArea({
   isMyTurn,
   actions,
 }: GameScreenProps) {
+  const [visibleCardId, setVisibleCardId] = useState(displayedCard?.id ?? null)
+  const [flipPhase, setFlipPhase] = useState<'hide' | 'reveal' | 'wobble' | null>(null)
+  const previousDeclaration = useRef<DeclarationNotice | null>(null)
+
+  useLayoutEffect(() => {
+    const previous = previousDeclaration.current
+    previousDeclaration.current = displayedDeclaration
+
+    if (!displayedDeclaration) {
+      setVisibleCardId(null)
+      setFlipPhase(null)
+      return
+    }
+
+    const shouldFlipToActualCard = Boolean(
+      displayedDeclaration.truthful === false
+      && displayedDeclaration.actualCardId
+      && displayedDeclaration.actualCardId !== displayedDeclaration.declaredCardId
+      && previous?.playerId === displayedDeclaration.playerId
+      && previous.declaredCardId === displayedDeclaration.declaredCardId
+      && previous.truthful === null,
+    )
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (shouldFlipToActualCard && !reduceMotion) {
+      setVisibleCardId(displayedDeclaration.declaredCardId)
+      setFlipPhase('hide')
+      return
+    }
+
+    setVisibleCardId(
+      displayedDeclaration.truthful === false && displayedDeclaration.actualCardId
+        ? displayedDeclaration.actualCardId
+        : displayedDeclaration.declaredCardId,
+    )
+    setFlipPhase(null)
+  }, [
+    displayedDeclaration?.playerId,
+    displayedDeclaration?.declaredCardId,
+    displayedDeclaration?.truthful,
+    displayedDeclaration?.actualCardId,
+  ])
+
+  const handleFlipAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget) return
+    if (flipPhase === 'hide' && displayedDeclaration?.actualCardId) {
+      setVisibleCardId(displayedDeclaration.actualCardId)
+      setFlipPhase('reveal')
+    } else if (flipPhase === 'reveal') {
+      setFlipPhase('wobble')
+    } else if (flipPhase === 'wobble') {
+      setFlipPhase(null)
+    }
+  }
+  const visibleCard = visibleCardId ? getCard(visibleCardId) : null
+
   return (
     <>
       {game.matchResult && game.status === 'LOBBY' && <ResultBanner>{game.matchResult.message}</ResultBanner>}
@@ -40,7 +97,7 @@ export function CenterInfoArea({
         <TableState>
           <Supply>
             <span>남은 체력 토큰</span>
-            <SupplyValue>{game.supplyHealth}</SupplyValue>
+            <SupplyValue data-health-supply="true">{game.supplyHealth}</SupplyValue>
           </Supply>
           <DeclarationPanel>
             <DeclarationText>
@@ -51,10 +108,15 @@ export function CenterInfoArea({
                 {displayedDeclarationLabel}은 {displayedDeclaration.truthful ? '진실' : '거짓'}이었습니다.
               </VerdictText>
             )}
-            <DeclaredCard data-declared-card="true" $truthful={displayedDeclaration?.truthful ?? null}>
-              {displayedCard && <CardMascot cardId={displayedCard.id} />}
-              <DeclaredCardName>{displayedCard?.ko ?? '선언 대기'}</DeclaredCardName>
-              <DeclaredCardEnglish>{displayedCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
+            <DeclaredCard
+              data-declared-card="true"
+              $truthful={displayedDeclaration?.truthful ?? null}
+              $flipPhase={flipPhase}
+              onAnimationEnd={handleFlipAnimationEnd}
+            >
+              {visibleCard && <CardMascot cardId={visibleCard.id} />}
+              <DeclaredCardName>{visibleCard?.ko ?? '선언 대기'}</DeclaredCardName>
+              <DeclaredCardEnglish>{visibleCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>
           </DeclarationPanel>
           <Deck data-deck-source="true">
