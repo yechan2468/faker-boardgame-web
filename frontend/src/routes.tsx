@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import GamePage from './App'
+import { RefreshButton } from './features/game/gameStyles'
 import type { PlayerRole } from './types/game'
 
 interface Session {
@@ -62,20 +63,81 @@ function GameRoute() {
 }
 
 function LoginPage() {
-  const navigate = useNavigate(); const queryClient = useQueryClient(); const session = useSession()
-  const [nickname, setNickname] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState<string | null>(null); const [submitting, setSubmitting] = useState(false)
-  useEffect(() => { if (session.data?.authenticated) navigate(session.data.role === 'HOST' ? '/admin' : '/', { replace: true }) }, [navigate, session.data])
-  async function submit(event: FormEvent) {
-    event.preventDefault(); setError(null); setSubmitting(true)
-    try {
-      const response = await fetch('/api/auth/login', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ username: nickname, password, loginSource: 'player' }) })
-      if (!response.ok) throw new Error(await readMessage(response, '입장할 수 없습니다.'))
-      await queryClient.invalidateQueries({ queryKey: ['session'] }); navigate('/', { replace: true })
-    } catch (reason) { setError(reason instanceof Error ? reason.message : '입장할 수 없습니다.') } finally { setSubmitting(false) }
-  }
-  return <Page><Card><Eyebrow>Faker Blue</Eyebrow><h1>게임 입장</h1><Description>호스트가 알려준 비밀번호와 사용할 닉네임을 입력해 주세요.</Description>{!session.data?.guestLoginEnabled && <Notice>호스트가 아직 방을 열지 않았습니다. 호스트가 먼저 로그인하고 비밀번호를 설정해야 합니다.</Notice>}{error && <Notice $error>{error}</Notice>}<Form onSubmit={submit}><label htmlFor="nickname">닉네임</label><input id="nickname" value={nickname} onChange={(event) => setNickname(event.target.value)} autoComplete="nickname" required /><label htmlFor="guest-password">호스트 비밀번호</label><input id="guest-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required /><Button disabled={submitting || !session.data?.guestLoginEnabled}>{submitting ? '입장 중...' : '입장하기'}</Button></Form><LinkButton onClick={() => navigate('/admin')}>호스트 로그인</LinkButton></Card></Page>
-}
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const session = useSession()
+  const [nickname, setNickname] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
 
+  useEffect(() => {
+    if (session.data?.authenticated) {
+      navigate(session.data.role === 'HOST' ? '/admin' : '/', { replace: true })
+    }
+  }, [navigate, session.data])
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setError(null)
+    setSubmitting(true)
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ username: nickname, password, loginSource: 'player' }),
+      })
+      if (!response.ok) throw new Error(await readMessage(response, '입장할 수 없습니다.'))
+      await queryClient.invalidateQueries({ queryKey: ['session'] })
+      navigate('/', { replace: true })
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : '입장할 수 없습니다.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  const sessionError = session.error instanceof Error
+    ? session.error.message
+    : '로그인 상태를 확인하지 못했습니다.'
+
+  return (
+    <Page>
+      <Card>
+        <Eyebrow>Faker Blue</Eyebrow>
+        <h1>게임 입장</h1>
+        <Description>호스트가 알려준 비밀번호와 사용할 닉네임을 입력해 주세요.</Description>
+        {session.isError ? (
+          <Notice $error>
+            {sessionError}
+            <RefreshButton type="button" onClick={() => void session.refetch()} disabled={session.isFetching}>
+              새로 고침
+            </RefreshButton>
+          </Notice>
+        ) : !session.data?.guestLoginEnabled ? (
+          <Notice>
+            호스트가 아직 방을 열지 않았습니다. 호스트가 먼저 로그인하고 비밀번호를 설정해야 합니다.
+            <RefreshButton type="button" onClick={() => void session.refetch()} disabled={session.isFetching}>
+              새로 고침
+            </RefreshButton>
+          </Notice>
+        ) : null}
+        {error && <Notice $error>{error}</Notice>}
+        <Form onSubmit={submit}>
+          <label htmlFor="nickname">닉네임</label>
+          <input id="nickname" value={nickname} onChange={(event) => setNickname(event.target.value)} autoComplete="nickname" required />
+          <label htmlFor="guest-password">호스트 비밀번호</label>
+          <input id="guest-password" type="password" value={password} onChange={(event) => setPassword(event.target.value)} autoComplete="current-password" required />
+          <Button disabled={submitting || !session.data?.guestLoginEnabled}>
+            {submitting ? '입장 중...' : '입장하기'}
+          </Button>
+        </Form>
+        <LinkButton onClick={() => navigate('/admin')}>호스트 로그인</LinkButton>
+      </Card>
+    </Page>
+  )
+}
 function HostLogin() {
   const navigate = useNavigate(); const queryClient = useQueryClient()
   const [username, setUsername] = useState(''); const [password, setPassword] = useState(''); const [error, setError] = useState<string | null>(null); const [submitting, setSubmitting] = useState(false)
@@ -105,6 +167,21 @@ function HostSetup({ guestLoginEnabled }: { guestLoginEnabled: boolean }) {
 function AdminPage() {
   const session = useSession()
   if (session.isLoading) return <Loading />
+  if (session.isError) {
+    const message = session.error instanceof Error ? session.error.message : '로그인 상태를 확인하지 못했습니다.'
+    return (
+      <Page>
+        <Card>
+          <Notice $error>
+            {message}
+            <RefreshButton type="button" onClick={() => void session.refetch()} disabled={session.isFetching}>
+              새로 고침
+            </RefreshButton>
+          </Notice>
+        </Card>
+      </Page>
+    )
+  }
   if (!session.data?.authenticated) return <HostLogin />
   return session.data.role === 'HOST' ? <HostSetup guestLoginEnabled={session.data.guestLoginEnabled} /> : <Navigate to="/" replace />
 }

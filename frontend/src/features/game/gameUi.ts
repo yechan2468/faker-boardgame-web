@@ -1,4 +1,4 @@
-import type { PublicPlayer } from './types/game'
+import type { PublicPlayer } from '../../types/game'
 
 export type CardInfo = {
   id: string

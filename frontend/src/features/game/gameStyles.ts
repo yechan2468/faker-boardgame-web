@@ -218,6 +218,20 @@ export const Status = styled.div`
   &[data-error='true'] { color: #ffcf9c; }
 `
 
+export const RefreshButton = styled.button`
+  display: inline-block;
+  margin-left: 0.65rem;
+  padding: 0;
+  border: 0;
+  color: #8dc2ff;
+  background: transparent;
+  font: inherit;
+  font-size: 0.92em;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+  &:disabled { cursor: wait; opacity: 0.55; }
+`
 export const TurnGlow = keyframes`
   0% { opacity: 0; transform: scale(0.94); }
   14% { opacity: 1; transform: scale(1); }
