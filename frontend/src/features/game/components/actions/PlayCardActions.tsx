@@ -1,6 +1,6 @@
 import type { GameScreenProps } from '../../types'
 import type { CardInfo } from '../../gameUi'
-import { ActionButton, ActionChoices, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationChoice } from '../../gameStyles'
+import { ActionButton, ActionChoices, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationButton, TruthfulDeclarationChoice } from '../../gameStyles'
 
 function getDeclaredEffect(card: CardInfo) {
   switch (card.id) {
@@ -56,13 +56,14 @@ export function PlayCardActions({
     <ActionChoices>
       <TruthfulDeclarationChoice>
         <ChoiceTitle>블러핑하지 않기</ChoiceTitle>
-        <ActionButton
+        <TruthfulDeclarationButton
           type="button"
+          $selected={selectedDeclarationId === selectedCard.id}
           onClick={() => actions.setSelectedDeclarationId(selectedCard.id)}
           disabled={selectedCard.id === 'clown' || !eligibleDeclarations.some((card) => card.id === selectedCard.id)}
         >
           {truthfulDeclarationLabel}
-        </ActionButton>
+        </TruthfulDeclarationButton>
       </TruthfulDeclarationChoice>
       <Choice>
         <ChoiceTitle>블러핑하기 · 선언 카드 선택</ChoiceTitle>

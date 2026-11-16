@@ -197,22 +197,35 @@ const sharedCardSurface = css<SharedCardProps>`
   width: clamp(6.3rem, 11vw, 8rem);
   height: clamp(8.3rem, 17vh, 11rem);
   padding: 0.55rem 0.45rem 0.65rem;
-  border: 1px solid ${({ $selected, $truthful }) =>
-    $selected ? '#29387c' : $truthful === true ? '#1ea9e0' : $truthful === false ? '#972e67' : '#168dbb'};
+  border: 2px solid #17234f;
   border-radius: 0.8rem;
   color: #202124;
-  background: linear-gradient(155deg, #59c9ec 0%, #1ea9e0 100%);
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 17% 7%, rgb(255 255 255 / 58%) 0%, rgb(255 255 255 / 20%) 19%, transparent 42%),
+    linear-gradient(145deg, rgb(255 255 255 / 13%) 0%, transparent 38%, rgb(20 45 95 / 9%) 100%),
+    linear-gradient(155deg, #59c9ec 0%, #1ea9e0 100%);
   box-shadow: ${({ $selected }) => ($selected
-    ? '0 2px 0 #202d69, 0 0 0 2px rgb(41 56 124 / 24%), 0 8px 14px rgb(18 25 65 / 20%)'
-    : '0 2px 0 #147aa3, 0 6px 12px rgb(18 25 65 / 16%)')};
+    ? '0 3px 0 #111c43, 0 0 0 2px rgb(41 56 124 / 24%), 0 8px 14px rgb(18 25 65 / 20%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%)'
+    : '0 3px 0 #111c43, 0 6px 12px rgb(18 25 65 / 16%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%)')};
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    inset: 0.28rem;
+    border: 1px solid #29387c;
+    border-radius: 0.52rem;
+    box-shadow: inset 0 0 0 1px rgb(23 35 79 / 22%);
+    pointer-events: none;
+  }
 `
 
 export const CardCornerValue = styled.span<{ $corner: 'top-left' | 'bottom-right' }>`
   position: absolute;
-  z-index: 2;
+  z-index: 3;
   ${({ $corner }) => $corner === 'top-left'
-    ? css`top: 0.45rem; left: 0.5rem;`
-    : css`right: 0.5rem; bottom: 0.45rem; transform: rotate(180deg);`}
+    ? css`top: 0.72rem; left: 0.72rem;`
+    : css`right: 0.72rem; bottom: 0.72rem; transform: rotate(180deg);`}
   color: #202d69;
   font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: clamp(1.05rem, 1.6vw, 1.4rem);
@@ -398,7 +411,7 @@ export const Pills = styled.div`
   flex-wrap: wrap;
 `
 
-export const Pill = styled.button<{ $selected?: boolean }>`
+export const Pill = styled.button.attrs({ 'data-game-sound': 'pill' })<{ $selected?: boolean }>`
   border: 1px solid ${({ $selected }) => ($selected ? '#202d69' : '#168dbb')};
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
@@ -429,6 +442,21 @@ export const ActionButton = styled.button`
   cursor: pointer;
   &:hover { background: linear-gradient(180deg, #b54b88, #972e67); }
   &:disabled { cursor: not-allowed; opacity: 0.48; }
+`
+export const TruthfulDeclarationButton = styled(ActionButton).attrs({ 'data-game-sound': 'pill' })<{ $selected?: boolean }>`
+  min-height: 2.45rem;
+  padding: 0.48rem 1.05rem;
+  border-color: ${({ $selected }) => ($selected ? '#202d69' : '#168dbb')};
+  color: ${({ $selected }) => ($selected ? '#fff' : '#202d69')};
+  background: ${({ $selected }) => ($selected
+    ? 'linear-gradient(180deg, #30a9e0, #29387c)'
+    : 'linear-gradient(180deg, #e6f9ff, #bceafa)')};
+  box-shadow: 0 2px 0 ${({ $selected }) => ($selected ? '#17234f' : '#79c6df')};
+  font-size: 0.85rem;
+  font-weight: 800;
+  &:hover { background: ${({ $selected }) => ($selected
+    ? 'linear-gradient(180deg, #55bce8, #354a9a)'
+    : 'linear-gradient(180deg, #f5fcff, #c8effa)')}; }
 `
 export const BottomArea = styled.div`
   display: grid;
@@ -503,8 +531,14 @@ export const CardArtFrame = styled.div<{ $large?: boolean }>`
   display: grid;
   place-items: center;
   width: 100%;
-  height: ${({ $large }) => ($large ? 'clamp(5.2rem, 10vh, 6.4rem)' : 'clamp(3.8rem, 7vh, 4.4rem)')};
-  svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  height: ${({ $large }) => ($large ? 'clamp(4.7rem, 9vh, 5.7rem)' : 'clamp(3.5rem, 6.5vh, 4.1rem)')};
+  svg {
+    display: block;
+    width: 90%;
+    height: 90%;
+    overflow: visible;
+    transform: translateY(-0.55rem);
+  }
 `
 export const CardEffectIcons = styled.span`
   min-height: 1rem;
@@ -513,18 +547,19 @@ export const CardEffectIcons = styled.span`
   line-height: 1;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  transform: translateY(0.3rem);
 `
 export const GameCard = styled.button<{ $selected: boolean }>`
   ${sharedCardSurface}
   width: clamp(7.5rem, 13vw, 10rem);
   height: clamp(10rem, 21vh, 13rem);
   padding: 0.65rem 0.55rem 0.75rem;
-  ${CardArtFrame} { height: clamp(5.2rem, 10vh, 6.4rem); }
+  ${CardArtFrame} { height: clamp(4.7rem, 9vh, 5.7rem); }
   position: relative;
   z-index: ${({ $selected }) => ($selected ? 2 : 0)};
   transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'none')};
   ${({ $selected }) => $selected && css`
-    box-shadow: 0 4px 0 #202d69, 0 0 0 3px rgb(105 210 241 / 72%), 0 14px 24px rgb(18 25 65 / 35%);
+    box-shadow: 0 4px 0 #111c43, 0 0 0 3px rgb(105 210 241 / 72%), 0 14px 24px rgb(18 25 65 / 35%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%);
     animation: ${liftSelectedCard} 260ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
   `}
   cursor: pointer;

@@ -20,12 +20,14 @@ import {
 import { getCard, getCardEffectIcons } from '../../gameUi'
 import { CardMascot } from '../cards/CardMascot'
 import { animateCardDraw, hideCardUntilDraw } from '../animations/cardAnimations'
+import { useGameAudio } from '../../audio/GameAudioProvider'
 
 type DrawnCard = { cardId: string; occurrence: number }
 type CardPointer = { pointerId: number; startX: number; startY: number; moved: boolean }
 const DRAW_ANIMATION_DELAY_MS = 1000
 
-export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
+export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
+  const { playSound } = useGameAudio()
   const handElement = useRef<HTMLDivElement>(null)
   const previousHand = useRef<string[]>([])
   const pendingDrawCards = useRef<DrawnCard[]>([])
@@ -38,6 +40,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
   }
 
   const selectDraggedCard = (index: number) => {
+    if (selectedHandIndex !== index) playSound('selectCard')
     actions.setSelectedHandIndex(index)
     resetCardActions()
   }
@@ -67,6 +70,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
     }
 
     const cardsToAnimate = [...pendingDrawCards.current, ...drawnCards]
+    if (game.turn.phase === 'START') cardsToAnimate.forEach(() => playSound('drawCard'))
     const deck = document.querySelector<HTMLElement>('[data-deck-source]')
     if (!deck) {
       cardsToAnimate.forEach(({ cardId, occurrence }) => {
@@ -89,7 +93,7 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
       const card = handElement.current?.querySelector<HTMLElement>(`[data-hand-index="${index}"]`)
       if (card) animateCardDraw(card, deck, DRAW_ANIMATION_DELAY_MS + order * 110)
     })
-  }, [hand, turnIntro])
+  }, [game.turn.phase, hand, playSound, turnIntro])
 
   return (
     <BottomArea>
@@ -147,7 +151,13 @@ export function BottomPlayerArea({ self, hand, selectedHandIndex, turnPreview, t
                   suppressClick.current = false
                   return
                 }
-                actions.setSelectedHandIndex(selectedHandIndex === index ? null : index)
+                if (selectedHandIndex === index) {
+                  playSound('deselectCard')
+                  actions.setSelectedHandIndex(null)
+                } else {
+                  playSound('selectCard')
+                  actions.setSelectedHandIndex(index)
+                }
                 resetCardActions()
               }}
               aria-pressed={selectedHandIndex === index}

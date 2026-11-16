@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import type { GameState, PublicPlayer } from '../../types/game'
 import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
 import { createGameActions } from './gameActions'
+import { useGameAudio } from './audio/GameAudioProvider'
 import { fetchGameState, fetchLeaderboard } from './gameQueries'
 import { getGameStatusText } from './gameStatusText'
 import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice, GameScreenProps } from './types'
@@ -61,6 +62,7 @@ export function useGameController(): GameControllerResult {
     turnNumber: game?.turn.number,
     phase: game?.turn.phase,
   })
+  const { playSound } = useGameAudio()
   const showError = useCallback((message: string) => {
     setErrorMessage(message)
     window.clearTimeout(errorTimerRef.current)
@@ -172,6 +174,7 @@ export function useGameController(): GameControllerResult {
     clientRef,
     queryClient,
     showError,
+    playSound,
     selectedHandIndex,
     selectedCard,
     selectedDeclaration,

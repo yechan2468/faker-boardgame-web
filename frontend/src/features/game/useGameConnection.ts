@@ -4,6 +4,7 @@ import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
 import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice } from './types'
 import { getCard, type DeclarationNotice } from './gameUi'
+import { useGameAudio } from './audio/GameAudioProvider'
 
 type GameConnectionOptions = {
   gameStatus: string | undefined
@@ -31,6 +32,7 @@ export function useGameConnection({
   setAlchemistResolutionNotice,
 }: GameConnectionOptions) {
   const clientRef = useRef<Client | null>(null)
+  const { playSound } = useGameAudio()
   useEffect(() => {
     if (!gameStatus) return
     const client = new Client({
@@ -83,6 +85,7 @@ export function useGameConnection({
             && nextPendingAction === null
             && nextTurn.number === previousState.turn.number
           ) {
+            playSound('drawCard')
             setAlchemistResolutionNotice({
               actorId: previousPendingAction.actorId,
               targetId: alchemistTargetId,
@@ -247,7 +250,7 @@ export function useGameConnection({
       clientRef.current = null
       void client.deactivate()
     }
-  }, [gameStatus, queryClient, showError])
+  }, [gameStatus, playSound, queryClient, showError])
 
   return clientRef
 }

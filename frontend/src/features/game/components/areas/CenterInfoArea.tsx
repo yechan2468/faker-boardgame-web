@@ -23,6 +23,7 @@ import {
 } from '../../gameStyles'
 import { CardMascot } from '../cards/CardMascot'
 import { getCard, getCardEffectIcons, type DeclarationNotice } from '../../gameUi'
+import { useGameAudio } from '../../audio/GameAudioProvider'
 
 export function CenterInfoArea({
   game,
@@ -37,6 +38,7 @@ export function CenterInfoArea({
   isMyTurn,
   actions,
 }: GameScreenProps) {
+  const { playSound } = useGameAudio()
   const [visibleCardId, setVisibleCardId] = useState(displayedCard?.id ?? null)
   const [flipPhase, setFlipPhase] = useState<'hide' | 'reveal' | 'wobble' | null>(null)
   const previousDeclaration = useRef<DeclarationNotice | null>(null)
@@ -60,6 +62,7 @@ export function CenterInfoArea({
       && previous.truthful === null,
     )
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (shouldFlipToActualCard) playSound('cardFlip')
     if (shouldFlipToActualCard && !reduceMotion) {
       setVisibleCardId(displayedDeclaration.declaredCardId)
       setFlipPhase('hide')
@@ -77,6 +80,7 @@ export function CenterInfoArea({
     displayedDeclaration?.declaredCardId,
     displayedDeclaration?.truthful,
     displayedDeclaration?.actualCardId,
+    playSound,
   ])
 
   const handleFlipAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
@@ -85,6 +89,7 @@ export function CenterInfoArea({
       setVisibleCardId(displayedDeclaration.actualCardId)
       setFlipPhase('reveal')
     } else if (flipPhase === 'reveal') {
+      playSound('revealImpact')
       setFlipPhase('wobble')
     } else if (flipPhase === 'wobble') {
       setFlipPhase(null)
@@ -103,7 +108,7 @@ export function CenterInfoArea({
           </Supply>
           <DeclarationPanel>
             <DeclarationText>
-              {displayedDeclarationLabel ? displayedDeclarationLabel : '아직 카드 선언을 하지 않았습니다.'}
+              {displayedDeclarationLabel ? displayedDeclarationLabel : '아직 카드 선언이 되지 않았습니다.'}
             </DeclarationText>
             {displayedDeclaration && displayedCard && displayedDeclaration.truthful !== null && (
               <VerdictText $truthful={displayedDeclaration.truthful}>

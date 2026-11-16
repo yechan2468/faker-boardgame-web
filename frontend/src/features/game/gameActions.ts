@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
 import { animatePlayedCard } from './components/animations/cardAnimations'
+import type { GameEffect } from './audio/GameAudioProvider'
 import type { CardInfo } from './gameUi'
 
 type GameActionsOptions = {
@@ -11,6 +12,7 @@ type GameActionsOptions = {
   clientRef: { current: Client | null }
   queryClient: QueryClient
   showError: (message: string) => void
+  playSound: (effect: GameEffect) => void
   selectedHandIndex: number | null
   selectedCard: CardInfo | null
   selectedDeclaration: CardInfo | null
@@ -42,6 +44,7 @@ export function createGameActions({
   clientRef,
   queryClient,
   showError,
+  playSound,
   selectedHandIndex,
   selectedCard,
   selectedDeclaration,
@@ -139,6 +142,8 @@ export function createGameActions({
       showError(messages.targetRequired)
       return
     }
+    playSound('bluffSubmit')
+    playSound('submitCard')
     if (clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
     publish('/app/game/bluff/submit', {
       actualCardId: selectedCard.id,
@@ -156,6 +161,7 @@ export function createGameActions({
       showError(messages.redirectTargetRequired)
       return
     }
+    playSound('submitCard')
     if (selectedHandIndex !== null && clientRef.current?.connected) animatePlayedCard(selectedHandIndex)
     publish('/app/game/card/defend', {
       actualCardId: selectedCard.id,

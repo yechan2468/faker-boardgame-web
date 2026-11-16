@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } fr
 import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 import ruleImage from '../../../../assets/image/rule.jpg'
+import { useGameAudio } from '../../audio/GameAudioProvider'
 
 type Position = { x: number; y: number }
 type DragState = { pointerId: number; offsetX: number; offsetY: number }
@@ -86,6 +87,7 @@ function clamp(value: number, min: number, max: number) {
 }
 
 export function FloatingRulesImage() {
+  const { playSound } = useGameAudio()
   const frame = useRef<HTMLDivElement>(null)
   const drag = useRef<DragState | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
@@ -182,6 +184,7 @@ export function FloatingRulesImage() {
         onPointerDown={(event) => event.stopPropagation()}
         onClick={(event) => {
           event.stopPropagation()
+          playSound('rulesToggle')
           setIsMinimized((minimized) => !minimized)
         }}
       >

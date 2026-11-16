@@ -3,6 +3,7 @@ import { type FormEvent, useEffect, useState } from 'react'
 import { Navigate, Route, Routes, useNavigate } from 'react-router-dom'
 import styled from 'styled-components'
 import GamePage from './App'
+import { GameAudioProvider } from './features/game/audio/GameAudioProvider'
 import { RefreshButton } from './features/game/gameStyles'
 import type { PlayerRole } from './types/game'
 
@@ -68,7 +69,7 @@ function GameRoute() {
   if (session.data.role === 'HOST' && !session.data.guestLoginEnabled) {
     return <Navigate to="/admin" replace />
   }
-  return <GamePage />
+  return <GameAudioProvider><GamePage /></GameAudioProvider>
 }
 
 function LoginPage() {
