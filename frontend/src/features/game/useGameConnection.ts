@@ -123,6 +123,7 @@ export function useGameConnection({
             })
           }
           if (payload.type === 'MATCH_STARTED') {
+            playSound('turnStart')
             setTurnIntro(true)
             setDeclarationNotice(null)
             setAttackResolutionNotice(null)
@@ -131,6 +132,7 @@ export function useGameConnection({
             setAlchemistResolutionNotice(null)
           }
           if (payload.type === 'TURN_STARTED') {
+            playSound('turnStart')
             setTurnIntro(true)
             setDefenseOutcomeNotice(null)
             setAlchemistResolutionNotice(null)

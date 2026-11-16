@@ -1,5 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { GameState } from '../../../../types/game'
+import { useGameAudio } from '../../audio/GameAudioProvider'
 import { animateHealthChange, findPlayerHealth } from './healthAnimations'
 
 type HealthSnapshot = {
@@ -11,6 +12,7 @@ type HealthSnapshot = {
 
 export function HealthChangeAnimator({ game }: { game: GameState }) {
   const previous = useRef<HealthSnapshot | null>(null)
+  const { playSound } = useGameAudio()
 
   useLayoutEffect(() => {
     const current: HealthSnapshot = {
@@ -27,6 +29,9 @@ export function HealthChangeAnimator({ game }: { game: GameState }) {
       .filter(([playerId, health]) => prior.playerHealth.has(playerId) && prior.playerHealth.get(playerId) !== health)
       .map(([playerId, health]) => ({ playerId, delta: health - (prior.playerHealth.get(playerId) ?? health) }))
     if (changes.length === 0) return
+
+    if (changes.some(({ delta }) => delta < 0)) playSound('healthChange')
+    if (changes.some(({ delta }) => delta > 0)) playSound('healthGain')
 
     const losses = changes.filter(({ delta }) => delta < 0)
       .map(({ playerId, delta }) => ({ playerId, count: -delta }))
@@ -65,7 +70,7 @@ export function HealthChangeAnimator({ game }: { game: GameState }) {
     }
 
     animateHealthChange(changes, tokenMoves, prior.supplyHealth !== current.supplyHealth)
-  }, [game.matchResult, game.players, game.status, game.supplyHealth])
+  }, [game.matchResult, game.players, game.status, game.supplyHealth, playSound])
 
   return null
 }

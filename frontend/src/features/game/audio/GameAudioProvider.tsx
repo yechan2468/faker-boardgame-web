@@ -24,6 +24,10 @@ const effectFiles = {
   submitCard: 'Taking Playing Card.mp3',
   bluffSubmit: 'Awesome Kick Drum.mp3',
   pillClick: 'ImmersiveControl Button Click Sound.mp3',
+  victory: 'Shine 7.mp3',
+  turnStart: 'New Notification 040.mp3',
+  healthChange: 'Hurt sound.mp3',
+  healthGain: 'Potion Drink (3).mp3',
 } as const
 
 export type GameEffect = keyof typeof effectFiles
