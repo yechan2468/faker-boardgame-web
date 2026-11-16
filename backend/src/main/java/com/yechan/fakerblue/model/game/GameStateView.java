@@ -39,13 +39,17 @@ public record GameStateView(
     public record PlayerView(String id, String nickname, PlayerRole role, boolean connected, int health,
             boolean alive, int cardCount) {}
 
-    public record PendingActionView(String actorId, String declaredCardId, List<String> targetIds,
+    public record PendingActionView(String actorId, String declaredCardId, String attackerActualCardId,
+            List<String> targetIds, Boolean attackerTruthful, List<String> defensePasses, List<String> suspicionPasses,
             List<DefenseView> defenses) {
         public PendingActionView {
             targetIds = List.copyOf(targetIds);
+            defensePasses = List.copyOf(defensePasses);
+            suspicionPasses = List.copyOf(suspicionPasses);
             defenses = List.copyOf(defenses);
         }
     }
 
-    public record DefenseView(String playerId, String declaredCardId, String redirectTargetId) {}
+    public record DefenseView(int index, String playerId, String declaredCardId, String actualCardId,
+            String redirectTargetId, Boolean truthful) {}
 }

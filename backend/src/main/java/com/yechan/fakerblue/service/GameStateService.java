@@ -11,8 +11,10 @@ import com.yechan.fakerblue.model.game.PlayerRole;
 import com.yechan.fakerblue.model.game.TurnState;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -64,8 +66,12 @@ public class GameStateService {
         if (removed == null || status != GameStatus.IN_GAME) return removed;
 
         if (pendingPlay != null) {
-            if (pendingPlay.actorId.equals(removed.id()) || removed.id().equals(turn.activePlayerId())) pendingPlay = null;
-            else pendingPlay.targets.remove(removed.id());
+            if (pendingPlay.actorId.equals(removed.id()) || removed.id().equals(turn.activePlayerId())) discardPendingCards();
+            else {
+                pendingPlay.targets.remove(removed.id());
+                pendingPlay.defensePasses.remove(removed.id());
+                pendingPlay.suspicionPasses.remove(removed.id());
+            }
         }
 
         if (playersBySession.values().stream().noneMatch(p -> p.health() > 0)) {
@@ -82,6 +88,8 @@ public class GameStateService {
                     "다른 모든 플레이어가 탈락하거나 나가서 승리했습니다.");
             return removed;
         }
+
+        advancePendingAfterPlayerDeparture();
 
         if (removed.id().equals(turn.activePlayerId())) {
             List<Map.Entry<String, GamePlayer>> remaining = new ArrayList<>(playersBySession.entrySet());
@@ -122,9 +130,17 @@ public class GameStateService {
     public synchronized GameStateView publicState(String viewerId) {
         GameStateView.PendingActionView pendingAction = pendingPlay == null ? null
                 : new GameStateView.PendingActionView(pendingPlay.actorId, pendingPlay.declared,
-                        pendingPlay.targets, pendingPlay.defenses.stream()
-                                .map(defense -> new GameStateView.DefenseView(defense.playerId,
-                                        defense.declaredCardId, defense.redirectTargetId))
+                        pendingPlay.attackerTruthful == null ? null : pendingPlay.actual,
+                        pendingPlay.targets, pendingPlay.attackerTruthful,
+                        List.copyOf(pendingPlay.defensePasses), List.copyOf(pendingPlay.suspicionPasses),
+                        java.util.stream.IntStream.range(0, pendingPlay.defenses.size())
+                                .mapToObj(index -> {
+                                    PendingDefense defense = pendingPlay.defenses.get(index);
+                                    return new GameStateView.DefenseView(defense.index, defense.playerId,
+                                            defense.declaredCardId,
+                                            defense.truthful == null ? null : defense.actualCardId,
+                                            defense.redirectTargetId, defense.truthful);
+                                })
                                 .toList());
         return GameStateView.from(currentState(), leaderboard(), viewerId, pendingAction);
     }
@@ -166,6 +182,7 @@ public class GameStateService {
     }
 
     public synchronized void endGame() {
+        discardPendingCards();
         status = GameStatus.LOBBY;
         turn = new TurnState(0, null, "WAITING");
         pendingPlay = null;
@@ -219,80 +236,102 @@ public class GameStateService {
             selectedTargets = List.of();
         }
         pendingPlay = new PendingPlay(actorId, actualCardId, declaredCardId, new ArrayList<>(selectedTargets));
-        turn = new TurnState(turn.number(), actorId, "SUSPICION");
+        List<String> remainingHand = new ArrayList<>(actor.cards());
+        remainingHand.remove(actualCardId);
+        String actorSession = playersBySession.entrySet().stream()
+                .filter(entry -> entry.getValue().id().equals(actorId))
+                .map(Map.Entry::getKey).findFirst().orElseThrow();
+        playersBySession.put(actorSession, withCards(actor, remainingHand));
+        boolean defenseWindow = declaration.kind() != CardCatalog.Kind.HEAL_AND_EXCHANGE
+                && !selectedTargets.isEmpty();
+        turn = new TurnState(turn.number(), actorId, defenseWindow ? "DEFENSE" : "SUSPICION");
         return new Declaration(actorId, declaredCardId, List.copyOf(pendingPlay.targets));
     }
 
     public synchronized Resolution challenge(String challengerId) {
-        return challenge(challengerId, null);
+        return challenge(challengerId, null, null);
     }
 
     public synchronized Resolution challenge(String challengerId, String challengedPlayerId) {
+        return challenge(challengerId, challengedPlayerId, null);
+    }
+
+    public synchronized Resolution challenge(String challengerId, String challengedPlayerId, Integer defenseIndex) {
         if (pendingPlay == null) throw new IllegalStateException("의심할 카드가 없습니다.");
+        if (!"SUSPICION".equals(turn.phase())) throw new IllegalStateException("방어 단계가 끝난 뒤 의심할 수 있습니다.");
         GamePlayer challenger = player(challengerId);
-        if (challenger.health() <= 0 || pendingPlay.actorId.equals(challengerId))
-            throw new IllegalStateException("다른 생존 플레이어만 카드를 의심할 수 있습니다.");
+        if (challenger.health() <= 0) throw new IllegalStateException("생존 플레이어만 카드를 의심할 수 있습니다.");
         String actorId = pendingPlay.actorId;
         String targetId = challengedPlayerId == null ? actorId : challengedPlayerId;
-        PendingDefense defense = pendingPlay.defenses.stream()
-                .filter(candidate -> candidate.playerId.equals(targetId)).findFirst().orElse(null);
-        boolean challengingAttack = targetId.equals(actorId);
-        if (!challengingAttack && defense == null)
-            throw new IllegalArgumentException("의심할 카드 제출을 찾을 수 없습니다.");
-        if (!challengingAttack && challengerId.equals(targetId))
-            throw new IllegalStateException("자신이 제출한 카드는 의심할 수 없습니다.");
+        boolean challengingAttack = defenseIndex == null && targetId.equals(actorId);
+        PendingDefense defense = challengingAttack ? null : pendingPlay.defenses.stream()
+                .filter(candidate -> candidate.playerId.equals(targetId)
+                        && (defenseIndex == null || candidate.index == defenseIndex))
+                .findFirst().orElse(null);
+        if (challengingAttack) {
+            if (challengerId.equals(actorId)) throw new IllegalStateException("자신이 제출한 카드는 의심할 수 없습니다.");
+            if (pendingPlay.attackerTruthful != null) throw new IllegalStateException("이미 의심한 카드입니다.");
+        } else {
+            if (defense == null) throw new IllegalArgumentException("의심할 카드 제출을 찾을 수 없습니다.");
+            if (challengerId.equals(targetId)) throw new IllegalStateException("자신이 제출한 카드는 의심할 수 없습니다.");
+            if (defense.truthful != null) throw new IllegalStateException("이미 의심한 카드입니다.");
+        }
+
         boolean truthful = challengingAttack
                 ? pendingPlay.actual.equals(pendingPlay.declared)
                 : defense.actualCardId.equals(defense.declaredCardId);
         String actualCardId = challengingAttack ? pendingPlay.actual : defense.actualCardId;
         String declaredCardId = challengingAttack ? pendingPlay.declared : defense.declaredCardId;
-        List<String> emptyHandDefenders = List.copyOf(pendingPlay.emptyHandDefenders);
-        if (challengingAttack && !truthful) {
-            GamePlayer actor = player(pendingPlay.actorId);
-            List<String> hand = new ArrayList<>(actor.cards());
-            hand.remove(pendingPlay.actual);
-            String session = playersBySession.entrySet().stream().filter(e -> e.getValue().id().equals(actor.id())).findFirst().orElseThrow().getKey();
-            playersBySession.put(session, withCards(actor, hand));
-            discardPile.add(pendingPlay.actual);
-        } else {
-            if (!challengingAttack && !truthful) {
-                pendingPlay.targets.remove(defense.redirectTargetId);
-                if (!pendingPlay.targets.contains(defense.playerId)) pendingPlay.targets.add(defense.playerId);
+        if (challengingAttack) {
+            pendingPlay.attackerTruthful = truthful;
+            if (truthful) changeHealth(challengerId, -2);
+            else {
+                changeHealth(actorId, -2);
+                healFromSupply(challengerId, 2);
             }
-            resolveCard(actorId, pendingPlay.declared, List.copyOf(pendingPlay.targets));
+        } else {
+            defense.truthful = truthful;
+            if (truthful) changeHealth(challengerId, -2);
+            else {
+                changeHealth(defense.playerId, -2);
+                healFromSupply(challengerId, 2);
+            }
         }
-        pendingPlay = null;
-        if (status == GameStatus.IN_GAME) drawForEmptyHandDefenders(emptyHandDefenders);
-        if (status == GameStatus.IN_GAME) {
-            if (player(actorId).health() <= 0) advanceTurnAfter(actorId);
-            else turn = new TurnState(turn.number(), actorId, "RESOLVED");
-            finishIfDeckExhausted();
+
+        if (status == GameStatus.IN_GAME && pendingPlay != null) {
+            pendingPlay.suspicionPasses.clear();
+            long aliveCount = playersBySession.values().stream().filter(candidate -> candidate.health() > 0).count();
+            if (aliveCount <= 1 || allPendingCardsWereChallenged()) finishPendingPlay();
         }
-        return new Resolution(truthful, challengerId, actorId, targetId, declaredCardId, actualCardId);
+        return new Resolution(truthful, challengerId, actorId, targetId, declaredCardId, actualCardId,
+                challengingAttack ? -1 : defense.index);
     }
 
-    public synchronized Resolution acceptDeclaration(String accepterId) {
-        if (pendingPlay == null) throw new IllegalStateException("확정할 카드가 없습니다.");
-        GamePlayer accepter = player(accepterId);
-        if (accepter.health() <= 0 || pendingPlay.actorId.equals(accepterId))
-            throw new IllegalStateException("다른 생존 플레이어만 선언을 확정할 수 있습니다.");
-        String actorId = pendingPlay.actorId;
-        String declared = pendingPlay.declared;
-        List<String> emptyHandDefenders = List.copyOf(pendingPlay.emptyHandDefenders);
-        resolveCard(actorId, declared, List.copyOf(pendingPlay.targets));
-        pendingPlay = null;
-        if (status == GameStatus.IN_GAME) drawForEmptyHandDefenders(emptyHandDefenders);
-        if (status == GameStatus.IN_GAME) {
-            if (player(actorId).health() <= 0) advanceTurnAfter(actorId);
-            else turn = new TurnState(turn.number(), actorId, "RESOLVED");
-            finishIfDeckExhausted();
-        }
-        return new Resolution(null, null, actorId, null, declared, null);
+    public synchronized void passSuspicion(String playerId) {
+        if (pendingPlay == null || !"SUSPICION".equals(turn.phase()))
+            throw new IllegalStateException("현재 의심 단계를 진행할 수 없습니다.");
+        GamePlayer passingPlayer = player(playerId);
+        if (passingPlayer.health() <= 0) throw new IllegalStateException("생존 플레이어만 의심을 마칠 수 있습니다.");
+        pendingPlay.suspicionPasses.add(playerId);
+        List<String> alivePlayerIds = playersBySession.values().stream()
+                .filter(candidate -> candidate.health() > 0).map(GamePlayer::id).toList();
+        if (pendingPlay.suspicionPasses.containsAll(alivePlayerIds)) finishPendingPlay();
+    }
+
+    public synchronized void passDefense(String playerId) {
+        if (pendingPlay == null || !"DEFENSE".equals(turn.phase()))
+            throw new IllegalStateException("현재 방어 단계를 진행할 수 없습니다.");
+        GamePlayer defender = player(playerId);
+        if (defender.health() <= 0) throw new IllegalStateException("생존 플레이어만 방어를 선택할 수 있습니다.");
+        if (!pendingPlay.targets.contains(playerId)) throw new IllegalStateException("방어할 공격 대상이 아닙니다.");
+        pendingPlay.defensePasses.add(playerId);
+        advanceToSuspicionIfDefenseComplete();
     }
 
     public synchronized GameState defendPending(String defenderId, String actualCardId, String defenseCardId,
             String redirectTargetId) {
         if (pendingPlay == null) throw new IllegalStateException("방어할 카드가 없습니다.");
+        if (!"DEFENSE".equals(turn.phase())) throw new IllegalStateException("의심 단계에서는 방어할 수 없습니다.");
         if (pendingPlay.declared.equals("alchemist")) throw new IllegalStateException("연금술사의 교환은 방어할 수 없습니다.");
         GamePlayer defender = player(defenderId);
         if (defender.health() <= 0) throw new IllegalStateException("탈락한 플레이어는 방어할 수 없습니다.");
@@ -311,28 +350,64 @@ public class GameStateService {
             throw new IllegalArgumentException("반사할 대상을 지정해 주세요.");
         List<String> hand = new ArrayList<>(defender.cards()); hand.remove(actualCardId);
         if (hand.isEmpty()) pendingPlay.emptyHandDefenders.add(defenderId);
-        pendingPlay.defenses.add(new PendingDefense(defenderId, actualCardId, defenseCardId, redirectTargetId));
+        pendingPlay.defenses.add(new PendingDefense(pendingPlay.defenses.size(), defenderId,
+                actualCardId, defenseCardId, redirectTargetId));
         String session = playersBySession.entrySet().stream().filter(e -> e.getValue().id().equals(defenderId)).findFirst().orElseThrow().getKey();
         playersBySession.put(session, withCards(defender, hand));
         pendingPlay.targets.remove(defenderId);
         if (defenseCardId.equals("wizard")) {
             pendingPlay.targets.add(redirectTargetId);
+            pendingPlay.defensePasses.remove(redirectTargetId);
         }
-        discardPile.add(actualCardId);
+        advanceToSuspicionIfDefenseComplete();
         return currentState();
+    }
+
+    private void advanceToSuspicionIfDefenseComplete() {
+        if (pendingPlay != null && "DEFENSE".equals(turn.phase())
+                && pendingPlay.targets.stream().allMatch(pendingPlay.defensePasses::contains)) {
+            pendingPlay.suspicionPasses.clear();
+            turn = new TurnState(turn.number(), turn.activePlayerId(), "SUSPICION");
+        }
+    }
+
+    private void advancePendingAfterPlayerDeparture() {
+        if (pendingPlay == null) return;
+        advanceToSuspicionIfDefenseComplete();
+        if (!"SUSPICION".equals(turn.phase())) return;
+        List<String> alivePlayerIds = playersBySession.values().stream()
+                .filter(candidate -> candidate.health() > 0).map(GamePlayer::id).toList();
+        if (pendingPlay.suspicionPasses.containsAll(alivePlayerIds)) finishPendingPlay();
     }
 
     public record Declaration(String actorId, String declaredCardId, List<String> targetIds) {}
     public record Resolution(Boolean truthful, String challengerId, String actorId, String challengedPlayerId,
-            String declaredCardId, String actualCardId) {}
-    private record PendingDefense(String playerId, String actualCardId, String declaredCardId,
-            String redirectTargetId) {}
+            String declaredCardId, String actualCardId, int defenseIndex) {}
+    private static class PendingDefense {
+        final int index;
+        final String playerId, actualCardId, declaredCardId, redirectTargetId;
+        Boolean truthful;
+
+        PendingDefense(int index, String playerId, String actualCardId, String declaredCardId, String redirectTargetId) {
+            this.index = index;
+            this.playerId = playerId;
+            this.actualCardId = actualCardId;
+            this.declaredCardId = declaredCardId;
+            this.redirectTargetId = redirectTargetId;
+        }
+    }
     private static class PendingPlay {
-        final String actorId, actual, declared; final List<String> targets;
+        final String actorId, actual, declared;
+        final List<String> originalTargets, targets;
+        final Set<String> defensePasses = new LinkedHashSet<>();
+        final Set<String> suspicionPasses = new LinkedHashSet<>();
         final List<String> emptyHandDefenders = new ArrayList<>();
         final List<PendingDefense> defenses = new ArrayList<>();
+        Boolean attackerTruthful;
+
         PendingPlay(String actorId, String actual, String declared, List<String> targets) {
             this.actorId = actorId; this.actual = actual; this.declared = declared; this.targets = targets;
+            this.originalTargets = new ArrayList<>(targets);
         }
     }
 
@@ -341,18 +416,40 @@ public class GameStateService {
                 .orElseThrow(() -> new IllegalArgumentException("플레이어를 찾을 수 없습니다."));
     }
 
-    private void resolveCard(String actorId, String cardId, List<String> targets) {
-        GamePlayer actor = player(actorId);
-        List<String> hand = new ArrayList<>(actor.cards());
-        String actual = pendingPlay.actual;
-        hand.remove(actual);
-        String session = playersBySession.entrySet().stream().filter(e -> e.getValue().id().equals(actorId)).findFirst().orElseThrow().getKey();
-        playersBySession.put(session, withCards(actor, hand));
-        CardCatalog.CardSpec spec = CardCatalog.ALL.stream().filter(c -> c.id().equals(cardId)).findFirst().orElseThrow();
-        // Effect resolution is routed through the same card rules as direct play.
-        applyEffect(actorId, spec, targets);
-        discardPile.add(actual);
+    private boolean allPendingCardsWereChallenged() {
+        return pendingPlay != null && pendingPlay.attackerTruthful != null
+                && pendingPlay.defenses.stream().allMatch(defense -> defense.truthful != null);
+    }
+
+    private void finishPendingPlay() {
+        if (pendingPlay == null) return;
+        PendingPlay completed = pendingPlay;
+        pendingPlay = null;
+        discardPile.add(completed.actual);
+        completed.defenses.forEach(defense -> discardPile.add(defense.actualCardId));
+
+        if (!Boolean.FALSE.equals(completed.attackerTruthful)) {
+            List<String> resolvedTargets = new ArrayList<>(completed.originalTargets);
+            for (PendingDefense defense : completed.defenses) {
+                if (!resolvedTargets.contains(defense.playerId) || Boolean.FALSE.equals(defense.truthful)) continue;
+                resolvedTargets.remove(defense.playerId);
+                if ("wizard".equals(defense.declaredCardId) && defense.redirectTargetId != null
+                        && !resolvedTargets.contains(defense.redirectTargetId)) {
+                    resolvedTargets.add(defense.redirectTargetId);
+                }
+            }
+            CardCatalog.CardSpec declaration = CardCatalog.ALL.stream()
+                    .filter(card -> card.id().equals(completed.declared)).findFirst().orElseThrow();
+            applyEffect(completed.actorId, declaration, resolvedTargets);
+        }
+
+        drawForEmptyHandDefenders(completed.emptyHandDefenders);
         finishMatchIfOnePlayerRemains();
+        if (status == GameStatus.IN_GAME) {
+            if (player(completed.actorId).health() <= 0) advanceTurnAfter(completed.actorId);
+            else turn = new TurnState(turn.number(), completed.actorId, "RESOLVED");
+            finishIfDeckExhausted();
+        }
     }
 
     private void applyEffect(String actorId, CardCatalog.CardSpec spec, List<String> targets) {
@@ -361,13 +458,8 @@ public class GameStateService {
                 if (spec.kind() == CardCatalog.Kind.SELF_COST_ATTACK) changeHealth(actorId, -1);
                 targets.forEach(id -> changeHealth(id, -spec.amount()));
             }
-            case AREA_ATTACK -> playersBySession.values().stream().map(GamePlayer::id)
-                    .filter(id -> !id.equals(actorId)).toList().forEach(id -> changeHealth(id, -spec.amount()));
-            case SINGLE_STEAL, AREA_STEAL -> {
-                List<String> victims = spec.kind() == CardCatalog.Kind.AREA_STEAL
-                        ? playersBySession.values().stream().map(GamePlayer::id).filter(id -> !id.equals(actorId)).toList() : targets;
-                for (String victim : victims) if (changeHealth(victim, -spec.amount()) > 0) changeHealth(actorId, spec.amount());
-            }
+            case AREA_ATTACK -> targets.forEach(id -> changeHealth(id, -spec.amount()));
+            case SINGLE_STEAL, AREA_STEAL -> targets.forEach(id -> transferHealth(id, actorId, spec.amount()));
             case HEAL -> healFromSupply(actorId, spec.amount());
             case HEAL_AND_EXCHANGE -> { healFromSupply(actorId, 1); if (!targets.isEmpty()) exchangeOneCard(actorId, targets.getFirst()); }
             case REFLECT, DEFEND, NO_ABILITY -> { }
@@ -456,28 +548,7 @@ public class GameStateService {
         List<String> hand = new ArrayList<>(actor.cards());
         hand.remove(cardId);
         playersBySession.put(actorSession, withCards(actor, hand));
-        switch (spec.kind()) {
-            case SINGLE_ATTACK, SELF_COST_ATTACK -> {
-                if (spec.kind() == CardCatalog.Kind.SELF_COST_ATTACK) changeHealth(actorId, -1);
-                targets.forEach(id -> changeHealth(id, -spec.amount()));
-            }
-            case AREA_ATTACK -> playersBySession.values().stream().map(GamePlayer::id)
-                    .filter(id -> !id.equals(actorId)).toList().forEach(id -> changeHealth(id, -spec.amount()));
-            case SINGLE_STEAL, AREA_STEAL -> {
-                List<String> victims = spec.kind() == CardCatalog.Kind.AREA_STEAL
-                        ? playersBySession.values().stream().map(GamePlayer::id).filter(id -> !id.equals(actorId)).toList()
-                        : targets;
-                for (String victim : victims) {
-                    if (changeHealth(victim, -spec.amount()) > 0) changeHealth(actorId, spec.amount());
-                }
-            }
-            case HEAL -> healFromSupply(actorId, spec.amount());
-            case HEAL_AND_EXCHANGE -> {
-                healFromSupply(actorId, 1);
-                if (!targets.isEmpty()) exchangeOneCard(actorId, targets.getFirst());
-            }
-            case REFLECT, DEFEND, NO_ABILITY -> { }
-        }
+        applyEffect(actorId, spec, targets);
         discardPile.add(cardId);
         finishMatchIfOnePlayerRemains();
         return currentState();
@@ -494,6 +565,7 @@ public class GameStateService {
         if (p.health() <= 0) return 0;
         int actual = delta < 0 ? -Math.min(p.health(), -delta) : delta;
         int remainingHealth = p.health() + actual;
+        if (actual < 0) supplyHealth += -actual;
         List<String> remainingCards = p.cards();
         if (remainingHealth == 0 && p.health() > 0) {
             discardPile.addAll(p.cards());
@@ -504,19 +576,54 @@ public class GameStateService {
         return -actual;
     }
 
+    private int transferHealth(String fromId, String toId, int amount) {
+        if (fromId.equals(toId) || amount <= 0) return 0;
+        var sourceEntry = playersBySession.entrySet().stream()
+                .filter(entry -> entry.getValue().id().equals(fromId)).findFirst();
+        var targetEntry = playersBySession.entrySet().stream()
+                .filter(entry -> entry.getValue().id().equals(toId)).findFirst();
+        if (sourceEntry.isEmpty() || targetEntry.isEmpty()) return 0;
+        GamePlayer source = sourceEntry.get().getValue();
+        GamePlayer target = targetEntry.get().getValue();
+        if (source.health() <= 0 || target.health() <= 0) return 0;
+        int transferred = Math.min(source.health(), amount);
+        int remainingSourceHealth = source.health() - transferred;
+        List<String> sourceCards = source.cards();
+        if (remainingSourceHealth == 0) {
+            discardPile.addAll(source.cards());
+            sourceCards = List.of();
+        }
+        playersBySession.put(sourceEntry.get().getKey(), new GamePlayer(source.id(), source.nickname(), source.role(),
+                source.connected(), remainingSourceHealth, sourceCards));
+        playersBySession.put(targetEntry.get().getKey(), new GamePlayer(target.id(), target.nickname(), target.role(),
+                target.connected(), target.health() + transferred, target.cards()));
+        return transferred;
+    }
+
     private void finishMatchIfOnePlayerRemains() {
         if (status != GameStatus.IN_GAME) return;
         List<GamePlayer> alivePlayers = playersBySession.values().stream().filter(p -> p.health() > 0).toList();
-        if (alivePlayers.size() == 1) finishMatch(alivePlayers, MatchResult.Reason.LAST_PLAYER_STANDING,
-                "다른 모든 플레이어가 탈락하여 승리했습니다.");
+        if (alivePlayers.size() == 1) {
+            discardPendingCards();
+            finishMatch(alivePlayers, MatchResult.Reason.LAST_PLAYER_STANDING,
+                    "다른 모든 플레이어가 탈락하여 승리했습니다.");
+        }
         else if (alivePlayers.isEmpty()) {
+            discardPendingCards();
             status = GameStatus.LOBBY;
             turn = new TurnState(0, null, "WAITING");
-            pendingPlay = null;
         }
     }
 
+    private void discardPendingCards() {
+        if (pendingPlay == null) return;
+        discardPile.add(pendingPlay.actual);
+        pendingPlay.defenses.forEach(defense -> discardPile.add(defense.actualCardId));
+        pendingPlay = null;
+    }
+
     private void finishMatch(List<GamePlayer> winners, MatchResult.Reason reason, String message) {
+        discardPendingCards();
         for (GamePlayer winner : winners) {
             LeaderboardEntry previous = leaderboardByPlayerId.get(winner.id());
             leaderboardByPlayerId.put(winner.id(), new LeaderboardEntry(winner.id(), winner.nickname(),
@@ -557,7 +664,10 @@ public class GameStateService {
     private void healFromSupply(String playerId, int amount) {
         if (player(playerId).health() <= 0) return;
         int healed = Math.min(supplyHealth, amount);
-        if (healed > 0) { supplyHealth -= healed; changeHealth(playerId, healed); }
+        if (healed > 0) {
+            supplyHealth -= healed;
+            changeHealth(playerId, healed);
+        }
     }
 
     private void exchangeOneCard(String actorId, String targetId) {

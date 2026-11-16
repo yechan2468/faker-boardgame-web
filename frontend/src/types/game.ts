@@ -56,8 +56,19 @@ export interface GameState {
 export interface PendingAction {
   actorId: string
   declaredCardId: string
+  attackerActualCardId: string | null
   targetIds: string[]
-  defenses: Array<{ playerId: string; declaredCardId: string; redirectTargetId: string | null }>
+  attackerTruthful: boolean | null
+  defensePasses: string[]
+  suspicionPasses: string[]
+  defenses: Array<{
+    index: number
+    playerId: string
+    declaredCardId: string
+    actualCardId: string | null
+    redirectTargetId: string | null
+    truthful: boolean | null
+  }>
 }
 
 export interface GameEvent {

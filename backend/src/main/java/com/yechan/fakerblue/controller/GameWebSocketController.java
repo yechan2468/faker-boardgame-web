@@ -51,37 +51,37 @@ public class GameWebSocketController {
     }
     @MessageMapping("game/bluff/submit")
     public void submitBluff(BluffMessage message, @AuthenticationPrincipal GamePrincipal player) {
-        var declaration = state.submitBluff(player.getId(), message.actualCardId(), message.declaredCardId(), message.targetIds());
-        messaging.convertAndSend("/topic/game", new BluffDeclared(declaration.actorId(), declaration.declaredCardId(), declaration.targetIds()));
-        messaging.convertAndSendToUser(player.getUsername(), "/queue/private", new PrivateHand(
+        state.submitBluff(player.getId(), message.actualCardId(), message.declaredCardId(), message.targetIds());
+        messaging.convertAndSendToUser(player.getId(), "/queue/private", new PrivateHand(
                 state.currentState().players().stream().filter(p -> p.id().equals(player.getId())).findFirst().orElseThrow().cards()));
         publish("BLUFF_SUBMITTED");
     }
     @MessageMapping("game/bluff/challenge")
     public void challenge(ChallengeMessage message, @AuthenticationPrincipal GamePrincipal player) {
-        var result = state.challenge(player.getId(), message == null ? null : message.challengedPlayerId());
+        var result = state.challenge(player.getId(), message == null ? null : message.challengedPlayerId(),
+                message == null ? null : message.defenseIndex());
         messaging.convertAndSend("/topic/game", new BluffResolved(result.truthful(), result.challengerId(),
                 result.actorId(), result.challengedPlayerId(), result.declaredCardId(), result.actualCardId(),
-                state.publicState()));
+                result.defenseIndex(), state.publicState()));
         publishPrivateHands();
         publish("STATE_CHANGED");
     }
-    @MessageMapping("game/bluff/accept")
-    public void accept(@AuthenticationPrincipal GamePrincipal player) {
-        var result = state.acceptDeclaration(player.getId());
-        messaging.convertAndSend("/topic/game", new BluffResolved(result.truthful(), result.challengerId(),
-                result.actorId(), result.challengedPlayerId(), result.declaredCardId(), result.actualCardId(),
-                state.publicState()));
+    @MessageMapping("game/bluff/pass")
+    public void passSuspicion(@AuthenticationPrincipal GamePrincipal player) {
+        state.passSuspicion(player.getId());
         publishPrivateHands();
         publish("STATE_CHANGED");
+    }
+    @MessageMapping("game/card/pass-defense")
+    public void passDefense(@AuthenticationPrincipal GamePrincipal player) {
+        state.passDefense(player.getId());
+        publish("DEFENSE_PASSED");
     }
     @MessageMapping("game/card/defend")
     public void defend(DefenseMessage message, @AuthenticationPrincipal GamePrincipal player) {
         state.defendPending(player.getId(), message.actualCardId(), message.declaredCardId(),
                 message.redirectTargetId());
-        messaging.convertAndSend("/topic/game", new DefenseDeclared(player.getId(), message.declaredCardId(),
-                message.redirectTargetId()));
-        messaging.convertAndSendToUser(player.getUsername(), "/queue/private", new PrivateHand(
+        messaging.convertAndSendToUser(player.getId(), "/queue/private", new PrivateHand(
                 state.currentState().players().stream().filter(p -> p.id().equals(player.getId())).findFirst().orElseThrow().cards()));
         publish("DEFENSE_SUBMITTED");
     }
@@ -106,11 +106,9 @@ public class GameWebSocketController {
     public record PrivateHand(List<String> cards) {}
     public record ErrorMessage(String message) {}
     public record BluffMessage(String actualCardId, String declaredCardId, List<String> targetIds) {}
-    public record ChallengeMessage(String challengedPlayerId) {}
-    public record BluffDeclared(String actorId, String declaredCardId, List<String> targetIds) {}
-    public record DefenseDeclared(String playerId, String declaredCardId, String redirectTargetId) {}
+    public record ChallengeMessage(String challengedPlayerId, Integer defenseIndex) {}
     public record BluffResolved(Boolean truthful, String challengerId, String actorId, String challengedPlayerId,
-            String declaredCardId, String actualCardId, GameStateView state) {}
+            String declaredCardId, String actualCardId, int defenseIndex, GameStateView state) {}
     public record DefenseMessage(String actualCardId, String declaredCardId, String redirectTargetId) {}
 
     private void publishPrivateHands() {

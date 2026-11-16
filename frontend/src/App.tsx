@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import styled, { keyframes } from 'styled-components'
-import type { GameState, LeaderboardEntry, PendingAction, PublicPlayer } from './types/game'
+import type { GameState, LeaderboardEntry, PublicPlayer } from './types/game'
 
 const CARD_INFO = [
   { id: 'assassin', ko: '암살자', en: 'Assassin', target: true },
@@ -448,7 +448,6 @@ function GamePage() {
   const [selectedHandIndex, setSelectedHandIndex] = useState<number | null>(null)
   const [selectedDeclarationId, setSelectedDeclarationId] = useState<string | null>(null)
   const [targetId, setTargetId] = useState<string | null>(null)
-  const [pendingOverride, setPendingOverride] = useState<PendingAction | null | undefined>(undefined)
   const [selectedDefenseType, setSelectedDefenseType] = useState<'defender' | 'wizard' | null>(null)
   const [redirectTargetId, setRedirectTargetId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
@@ -459,7 +458,7 @@ function GamePage() {
   const previousTurnRef = useRef<string | null>(null)
   const clientRef = useRef<Client | null>(null)
   const game = gameQuery.data
-  const pending = pendingOverride === undefined ? game?.pendingAction ?? null : pendingOverride
+  const pending = game?.pendingAction ?? null
   const gameStatus = game?.status
   const currentTurnId = game?.turn.activePlayerId ?? null
   const viewerId = game?.viewerId ?? null
@@ -486,7 +485,6 @@ function GamePage() {
             queryClient.setQueryData<GameState>(['game-state'], (current) =>
               current ? { ...current, ...publicState, viewerId: current.viewerId } : undefined,
             )
-            setPendingOverride(publicState.pendingAction ?? null)
           } else if (Array.isArray(payload.players) && typeof payload.status === 'string') {
             queryClient.setQueryData<GameState>(['game-state'], (current) =>
               current
@@ -502,45 +500,12 @@ function GamePage() {
                   }
                 : undefined,
             )
-            setPendingOverride((payload.pendingAction as GameState['pendingAction']) ?? null)
           }
 
-          if (typeof payload.actorId === 'string' && typeof payload.declaredCardId === 'string' && Array.isArray(payload.targetIds)) {
-            setPendingOverride({
-              actorId: payload.actorId,
-              declaredCardId: payload.declaredCardId,
-              targetIds: payload.targetIds as string[],
-              defenses: [],
-            })
+          if (typeof payload.truthful === 'boolean' && typeof payload.actualCardId === 'string') {
+            const cardName = getCard(payload.actualCardId).ko
+            showError(`${cardName} 선언은 ${payload.truthful ? '진실' : '거짓'}입니다.`)
           }
-          if (typeof payload.playerId === 'string' && typeof payload.declaredCardId === 'string') {
-            const defensePlayerId = payload.playerId
-            const defenseDeclarationId = payload.declaredCardId
-            const defenseRedirectTargetId = typeof payload.redirectTargetId === 'string' ? payload.redirectTargetId : null
-            setPendingOverride((override) => {
-              const current = override === undefined
-                ? queryClient.getQueryData<GameState>(['game-state'])?.pendingAction ?? null
-                : override
-              if (!current) return current
-              const nextTargets = current.targetIds.filter((id) => id !== defensePlayerId)
-              if (defenseDeclarationId === 'wizard' && defenseRedirectTargetId) {
-                nextTargets.push(defenseRedirectTargetId)
-              }
-              return {
-                ...current,
-                targetIds: nextTargets,
-                defenses: [
-                  ...current.defenses,
-                  {
-                    playerId: defensePlayerId,
-                    declaredCardId: defenseDeclarationId,
-                    redirectTargetId: defenseRedirectTargetId,
-                  },
-                ],
-              }
-            })
-          }
-          if (typeof payload.truthful === 'boolean' || payload.truthful === null) setPendingOverride(null)
         })
         client.subscribe('/user/queue/private', (message: IMessage) => {
           const payload = JSON.parse(message.body) as { cards?: string[] }
@@ -600,9 +565,13 @@ function GamePage() {
     ? errorMessage
     : game?.status !== 'IN_GAME'
       ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
-      : isMyTurn
-        ? '나의 턴입니다'
-        : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중...`
+      : game.turn.phase === 'DEFENSE'
+        ? '공격 대상들이 방어를 선택하는 중입니다.'
+        : game.turn.phase === 'SUSPICION'
+          ? '의심을 진행 중입니다.'
+          : isMyTurn
+            ? '나의 턴입니다'
+            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중...`
 
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
@@ -671,9 +640,21 @@ function GamePage() {
     setRedirectTargetId(null)
   }
 
+  const passDefense = () => {
+    setSelectedHandIndex(null)
+    setSelectedDefenseType(null)
+    setRedirectTargetId(null)
+    publish('/app/game/card/pass-defense', {})
+  }
+  const passSuspicion = () => publish('/app/game/bluff/pass', {})
   const submitTurnEnd = () => publish('/app/game/turn-end', {})
   const canAct = Boolean(isMyTurn && game?.turn.phase === 'START' && !pending)
-  const mustDefend = Boolean(game?.turn.phase === 'SUSPICION' && pending?.targetIds.includes(game.viewerId ?? ''))
+  const mustDefend = Boolean(
+    game?.turn.phase === 'DEFENSE' &&
+    pending && pending.targetIds.includes(game.viewerId ?? '') &&
+    !pending.defensePasses.includes(game.viewerId ?? ''),
+  )
+  const hasPassedSuspicion = Boolean(pending?.suspicionPasses.includes(game?.viewerId ?? ''))
 
   if (gameQuery.isLoading) {
     return <Page><TopBar><Brand>Faker Blue</Brand></TopBar><Status>게임 상태를 불러오는 중...</Status></Page>
@@ -698,12 +679,14 @@ function GamePage() {
               $active={game.turn.activePlayerId === player.id}
               $selected={targetId === player.id || redirectTargetId === player.id}
               $alive={player.alive}
+              disabled={Boolean(
+                mustDefend && selectedDefenseType === 'wizard' &&
+                (!player.alive || pending?.targetIds.includes(player.id)),
+              )}
               onClick={() => {
-                if (mustDefend && selectedDefenseType === 'wizard') setRedirectTargetId(player.id)
+                if (mustDefend && selectedDefenseType === 'wizard' && player.alive
+                  && !pending?.targetIds.includes(player.id)) setRedirectTargetId(player.id)
                 else if (isMyTurn && needsTarget) setTargetId(player.id)
-                else if (pending?.actorId === player.id && game.turn.phase === 'SUSPICION') {
-                  publish('/app/game/bluff/challenge', { challengedPlayerId: player.id })
-                }
               }}
               aria-pressed={targetId === player.id || redirectTargetId === player.id}
             >
@@ -792,27 +775,84 @@ function GamePage() {
             </ActionChoices>
           )}
 
-          {pending && game.turn.phase === 'SUSPICION' && game.viewerId !== pending.actorId && !mustDefend && (
+          {pending && game.turn.phase === 'DEFENSE' && !mustDefend && (
             <ActionChoices>
               <Choice>
-                <ChoiceTitle>{getCard(pending.declaredCardId).ko} 선언을 확인해 주세요.</ChoiceTitle>
+                <ChoiceTitle>공격 대상의 방어 선택을 기다리는 중</ChoiceTitle>
                 <Pills>
-                  <ActionButton type="button" onClick={() => publish('/app/game/bluff/challenge', { challengedPlayerId: pending.actorId })}>
-                    의심하기
-                  </ActionButton>
-                  <ActionButton type="button" onClick={() => publish('/app/game/bluff/accept', {})}>
-                    수용하기
-                  </ActionButton>
+                  {pending.defenses.map((defense) => (
+                    <Pill key={defense.index} type="button" disabled>
+                      {getPlayerName(game.players, defense.playerId)}: {getCard(defense.declaredCardId).ko}
+                    </Pill>
+                  ))}
+                  {pending.defensePasses.map((playerId) => (
+                    <Pill key={playerId} type="button" disabled>
+                      {getPlayerName(game.players, playerId)}: 방어 안 함
+                    </Pill>
+                  ))}
+                  {pending.targetIds.filter((playerId) => !pending.defensePasses.includes(playerId)).map((playerId) => (
+                    <Pill key={playerId} type="button" disabled>
+                      {getPlayerName(game.players, playerId)}: 선택 대기
+                    </Pill>
+                  ))}
                 </Pills>
               </Choice>
+            </ActionChoices>
+          )}
+
+          {pending && game.turn.phase === 'SUSPICION' && self?.alive && (
+            <ActionChoices>
+              <Choice>
+                <ChoiceTitle>
+                  {getPlayerName(game.players, pending.actorId)}의 {getCard(pending.declaredCardId).ko} 선언
+                </ChoiceTitle>
+                {pending.attackerTruthful === null ? (
+                  game.viewerId !== pending.actorId && (
+                    <ActionButton
+                      type="button"
+                      onClick={() => publish('/app/game/bluff/challenge', { challengedPlayerId: pending.actorId })}
+                    >
+                      공격 선언 의심하기
+                    </ActionButton>
+                  )
+                ) : (
+                  <ChoiceTitle>
+                    {pending.attackerTruthful ? '진실' : '거짓'} · 실제 카드: {getCard(pending.attackerActualCardId ?? '').ko}
+                  </ChoiceTitle>
+                )}
+              </Choice>
               {pending.defenses.map((defense) => (
-                <Choice key={`${defense.playerId}-${defense.declaredCardId}`}>
-                  <ChoiceTitle>{getPlayerName(game.players, defense.playerId)}의 {getCard(defense.declaredCardId).ko} 방어</ChoiceTitle>
-                  <ActionButton type="button" onClick={() => publish('/app/game/bluff/challenge', { challengedPlayerId: defense.playerId })}>
-                    방어 의심하기
-                  </ActionButton>
+                <Choice key={defense.index}>
+                  <ChoiceTitle>
+                    {getPlayerName(game.players, defense.playerId)}의 {getCard(defense.declaredCardId).ko} 방어
+                  </ChoiceTitle>
+                  {defense.truthful === null ? (
+                    game.viewerId !== defense.playerId && (
+                      <ActionButton
+                        type="button"
+                        onClick={() => publish('/app/game/bluff/challenge', {
+                          challengedPlayerId: defense.playerId,
+                          defenseIndex: defense.index,
+                        })}
+                      >
+                        방어 의심하기
+                      </ActionButton>
+                    )
+                  ) : (
+                    <ChoiceTitle>
+                      {defense.truthful ? '진실' : '거짓'} · 실제 카드: {getCard(defense.actualCardId ?? '').ko}
+                    </ChoiceTitle>
+                  )}
                 </Choice>
               ))}
+              <Choice>
+                <ChoiceTitle>
+                  의심을 끝내려면 생존 플레이어 모두가 패스해야 합니다. ({pending.suspicionPasses.length}/{game.players.filter((player) => player.alive).length})
+                </ChoiceTitle>
+                <ActionButton type="button" onClick={passSuspicion} disabled={hasPassedSuspicion}>
+                  {hasPassedSuspicion ? '패스 완료 · 다른 플레이어 대기 중' : '더 의심하지 않기'}
+                </ActionButton>
+              </Choice>
             </ActionChoices>
           )}
 
@@ -820,14 +860,19 @@ function GamePage() {
             <ActionChoices>
               <Choice>
                 <ChoiceTitle>방어 카드로 선언</ChoiceTitle>
-                <Pills>
-                  <Pill type="button" $selected={selectedDefenseType === 'defender'} onClick={() => setSelectedDefenseType('defender')}>방패병</Pill>
-                  <Pill type="button" $selected={selectedDefenseType === 'wizard'} onClick={() => setSelectedDefenseType('wizard')}>마법사</Pill>
-                </Pills>
+                {hand.length > 0 && (
+                  <Pills>
+                    <Pill type="button" $selected={selectedDefenseType === 'defender'} onClick={() => setSelectedDefenseType('defender')}>방패병</Pill>
+                    <Pill type="button" $selected={selectedDefenseType === 'wizard'} onClick={() => setSelectedDefenseType('wizard')}>마법사</Pill>
+                  </Pills>
+                )}
                 {selectedDefenseType === 'wizard' && <ChoiceTitle>상대 플레이어를 눌러 반사 대상을 선택하세요.</ChoiceTitle>}
                 <ActionButton type="button" onClick={submitDefense} disabled={!selectedDefenseType || selectedHandIndex === null || (selectedDefenseType === 'wizard' && !redirectTargetId)}>
                   선택한 카드로 방어
                 </ActionButton>
+                <SecondaryButton type="button" onClick={passDefense}>
+                  방어하지 않기
+                </SecondaryButton>
               </Choice>
             </ActionChoices>
           )}
