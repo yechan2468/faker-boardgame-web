@@ -28,8 +28,13 @@ export function animateCardDraw(card: HTMLElement, deck: HTMLElement, delay = 0)
       {
         opacity: 0.25,
         transform: `translate3d(${deckCenter.x - cardCenter.x}px, ${deckCenter.y - cardCenter.y}px, 0) scale(${deckRect.width / cardRect.width}, ${deckRect.height / cardRect.height}) rotate(8deg)`,
+        filter: 'drop-shadow(0 20px 26px rgb(0 0 0 / 32%))',
       },
-      { opacity: 1, transform: 'translate3d(0, 0, 0) scale(1, 1) rotate(0deg)' },
+      {
+        opacity: 1,
+        transform: 'translate3d(0, 0, 0) scale(1, 1) rotate(0deg)',
+        filter: 'none',
+      },
     ],
     {
       duration: 620,

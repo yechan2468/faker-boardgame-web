@@ -15,12 +15,12 @@ interface Session {
 
 const Page = styled.main`
   display: grid; min-height: 100vh; place-items: center; padding: 1.5rem; color: #fff;
-  background: radial-gradient(ellipse at 50% 28%, #34499a 0%, #29387c 55%, #202d69 100%);
+  background: radial-gradient(ellipse at 50% 28%, #49392b 0%, #261c14 58%, #100d0a 100%);
 `
 const Card = styled.section`
-  width: min(100%, 28rem); padding: 2rem; border: 1px solid #1ea9e0; border-radius: 1.1rem;
-  color: #202124; background: linear-gradient(155deg, #d9f3fb, #bceafa);
-  box-shadow: 0 2px 0 #79c6df, 0 1rem 2.5rem rgb(18 25 65 / 24%);
+  width: min(100%, 28rem); padding: 2rem; border: 1px solid #9b7646; border-radius: 1.1rem;
+  color: #261e16; background: linear-gradient(155deg, #fffaf0, #e8d9be);
+  box-shadow: 0 2px 0 #735435, 0 1rem 2.5rem rgb(24 16 10 / 30%);
   h1 { margin: .25rem 0 .8rem; font-size: 1.6rem; }
 `
 const Eyebrow = styled.p`
@@ -28,25 +28,25 @@ const Eyebrow = styled.p`
 `
 const Description = styled.p`margin: 0 0 1.5rem; color: #202124; line-height: 1.5;`
 const Notice = styled.p<{ $error?: boolean; $success?: boolean }>`
-  margin: 0 0 1rem; padding: .8rem; border: 1px solid ${({ $error, $success }) => ($error ? '#e79595' : $success ? '#9abd69' : '#1ea9e0')}; border-radius: .7rem;
+  margin: 0 0 1rem; padding: .8rem; border: 1px solid ${({ $error, $success }) => ($error ? '#b66b58' : $success ? '#8b8b5a' : '#9b7646')}; border-radius: .7rem;
   color: #202124;
-  background: ${({ $error, $success }) => ($error ? '#ffe0e0' : $success ? '#ebf6d9' : '#d9f3fb')};
+  background: ${({ $error, $success }) => ($error ? '#f3ded6' : $success ? '#e5e3cd' : '#f4e9d5')};
 `
 const Form = styled.form`
   display: grid; gap: .65rem;
   label { color: #202124; font-weight: 700; }
-  input { width: 100%; border: 1px solid #1ea9e0; border-radius: .55rem; padding: .7rem; color: #202124; background: #f8fdff; }
+  input { width: 100%; border: 1px solid #8b6a42; border-radius: .55rem; padding: .7rem; color: #261e16; background: #fffdf6; }
   button { margin-top: .45rem; }
 `
 const Button = styled.button`
-  border: 1px solid #6e214f; border-radius: .7rem; padding: .75rem 1rem; color: #fff;
-  background: linear-gradient(180deg, #a43d78, #972e67); box-shadow: 0 2px 0 #6e214f;
+  border: 1px solid #2b1d14; border-radius: .7rem; padding: .75rem 1rem; color: #fffaf0;
+  background: linear-gradient(180deg, #5b3e28, #3c291b); box-shadow: 0 2px 0 #2b1d14;
   font-weight: 800; cursor: pointer;
-  &:hover { background: linear-gradient(180deg, #b54b88, #972e67); }
+  &:hover { background: linear-gradient(180deg, #765235, #3c291b); }
   &:disabled { cursor: not-allowed; opacity: .5; }
 `
 const LinkButton = styled.button`
-  margin-top: 1rem; border: 0; border-radius: .4rem; padding: .2rem .35rem; color: #202124; background: #d9f3fb; cursor: pointer; text-decoration: underline;
+  margin-top: 1rem; border: 0; border-radius: .4rem; padding: .2rem .35rem; color: #261e16; background: #e8d9be; cursor: pointer; text-decoration: underline;
   &:disabled { cursor: not-allowed; opacity: .5; }
 `
 

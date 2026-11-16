@@ -135,8 +135,8 @@ export function CenterInfoArea({
             >
               {previewCard && (
                 <>
-                  <CardCornerValue aria-hidden="true" $corner="top-left">{14 - previewCard.value}</CardCornerValue>
-                  <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - previewCard.value}</CardCornerValue>
+                  <CardCornerValue aria-hidden="true" $corner="top-left" $value={14 - previewCard.value}>{14 - previewCard.value}</CardCornerValue>
+                  <CardCornerValue aria-hidden="true" $corner="bottom-right" $value={14 - previewCard.value}>{14 - previewCard.value}</CardCornerValue>
                 </>
               )}
               {previewCard && <CardMascot cardId={previewCard.id} />}

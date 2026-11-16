@@ -19,8 +19,8 @@ const MinimizeButton = styled.button<{ $minimized: boolean }>`
   border: 1px solid #fff;
   border-radius: 50%;
   color: #fff;
-  background: #29387c;
-  box-shadow: 0 2px 8px rgb(18 25 65 / 38%);
+  background: #3c291a;
+  box-shadow: 0 2px 8px rgb(24 16 10 / 38%);
   font: inherit;
   font-size: 1.2rem;
   font-weight: 900;
@@ -40,10 +40,10 @@ const RulesImageFrame = styled.div<{ $dragging: boolean; $minimized: boolean }>`
   max-height: ${({ $minimized }) => ($minimized ? '2.7rem' : '49.2vh')};
   min-height: 2.7rem;
   overflow: hidden;
-  border: 2px solid #168dbb;
+  border: 2px solid #765535;
   border-radius: ${({ $minimized }) => ($minimized ? '0.75rem' : '0.85rem')};
-  background: #d9f3fb;
-  box-shadow: 0 8px 24px rgb(18 25 65 / 42%);
+  background: #fffaf0;
+  box-shadow: 0 8px 24px rgb(24 16 10 / 42%);
   cursor: ${({ $dragging }) => ($dragging ? 'grabbing' : 'grab')};
   touch-action: none;
   user-select: none;
@@ -92,7 +92,7 @@ export function FloatingRulesImage() {
   const drag = useRef<DragState | null>(null)
   const [position, setPosition] = useState<Position | null>(null)
   const [isDragging, setIsDragging] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
+  const [isMinimized, setIsMinimized] = useState(true)
 
   useEffect(() => {
     const keepInsideViewport = () => {

@@ -25,11 +25,11 @@ function animateHealthToken(source: HTMLElement, target: HTMLElement, delay: num
     pointerEvents: 'none',
     display: 'grid',
     placeItems: 'center',
-    color: '#ff477e',
+    color: '#e4c78f',
     fontSize: '42px',
     fontWeight: '900',
     lineHeight: '1',
-    textShadow: '0 2px 5px rgb(18 25 65 / 55%)',
+    textShadow: '0 2px 5px rgb(24 16 10 / 55%)',
   })
   document.body.append(token)
 

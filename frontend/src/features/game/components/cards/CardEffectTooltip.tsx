@@ -13,11 +13,11 @@ const TooltipBox = styled.div`
   z-index: 20;
   width: min(21rem, calc(100vw - 1.5rem));
   padding: 0.75rem 0.9rem;
-  border: 1px solid #168dbb;
+  border: 1px solid #765535;
   border-radius: 0.8rem;
-  color: #202d69;
-  background: linear-gradient(155deg, #f4fcff, #c8effa);
-  box-shadow: 0 8px 24px rgb(18 25 65 / 34%);
+  color: #2b1c12;
+  background: linear-gradient(155deg, #fffdf6, #e8d9be);
+  box-shadow: 0 8px 24px rgb(24 16 10 / 34%);
   pointer-events: none;
   line-height: 1.45;
   animation: ${tooltipFadeIn} 180ms ease-out both;
@@ -31,7 +31,7 @@ const TooltipTitle = styled.div`
 `
 
 const TooltipDescription = styled.div`
-  color: #25345f;
+  color: #392719;
   font-size: 0.83rem;
   font-weight: 600;
   overflow-wrap: anywhere;

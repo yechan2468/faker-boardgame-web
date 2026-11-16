@@ -239,8 +239,10 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
                     transformOrigin: 'center center',
                     animation: 'none',
                     transition: 'filter 120ms ease-out',
-                    filter: 'brightness(1.12) drop-shadow(0 16px 18px rgb(18 25 65 / 38%))',
+                    filter: 'brightness(0.88) drop-shadow(0 30px 36px rgb(0 0 0 / 82%)) drop-shadow(0 46px 32px rgb(0 0 0 / 58%))',
                   })
+                  preview.style.setProperty('--card-gloss-opacity', '38%')
+                  preview.style.setProperty('--card-gloss-fade-opacity', '14%')
                   document.body.append(preview)
                   dragPreview.current = preview
                   dragSource.current = source
@@ -268,6 +270,7 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
                   const tiltX = verticalPosition * 18
                   const tiltY = -horizontalPosition * 24
                   const tiltZ = -horizontalPosition * 18
+                  const innerShadowStrength = Math.min(1, Math.hypot(tiltX / 18, tiltY / 24))
                   const cardLeft = activePointer.startLeft + deltaX
                   const cardTop = activePointer.startTop + deltaY
                   const glossX = Math.max(8, Math.min(92, ((event.clientX - cardLeft) / preview.offsetWidth) * 100))
@@ -275,7 +278,12 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
                   const shadowX = -horizontalPosition * 16
                   const shadowY = 16 + Math.abs(verticalPosition) * 12
                   preview.style.setProperty('--card-gloss-position', `${glossX}% ${glossY}%`)
-                  preview.style.filter = `brightness(1.12) drop-shadow(${shadowX}px ${shadowY}px 18px rgb(18 25 65 / 42%))`
+                  preview.style.setProperty('--card-inner-shadow-x', `${-horizontalPosition * 22}px`)
+                  preview.style.setProperty('--card-inner-shadow-y', `${12 - verticalPosition * 16}px`)
+                  preview.style.setProperty('--card-inner-shadow-blur', `${28 + innerShadowStrength * 44}px`)
+                  preview.style.setProperty('--card-inner-shadow-spread', `${-1 + innerShadowStrength * 9}px`)
+                  preview.style.setProperty('--card-inner-shadow-opacity', `${0.28 + innerShadowStrength * 0.52}`)
+                  preview.style.filter = `brightness(0.88) drop-shadow(${shadowX}px ${shadowY + 10}px 36px rgb(0 0 0 / 82%)) drop-shadow(0 28px 32px rgb(0 0 0 / 58%))`
                   preview.style.left = `${cardLeft}px`
                   preview.style.top = `${cardTop}px`
                   preview.style.transform = `perspective(780px) translateY(3px) rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${tiltZ}deg) scale(${scale})`
@@ -337,8 +345,8 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
               aria-pressed={selectedHandIndex === index}
               draggable={false}
             >
-              <CardCornerValue aria-hidden="true" $corner="top-left">{14 - card.value}</CardCornerValue>
-              <CardCornerValue aria-hidden="true" $corner="bottom-right">{14 - card.value}</CardCornerValue>
+              <CardCornerValue aria-hidden="true" $corner="top-left" $value={14 - card.value}>{14 - card.value}</CardCornerValue>
+              <CardCornerValue aria-hidden="true" $corner="bottom-right" $value={14 - card.value}>{14 - card.value}</CardCornerValue>
               <CardMascot cardId={card.id} large />
               <CardEffectIcons aria-hidden="true">{getCardEffectIcons(card.id)}</CardEffectIcons>
               <CardKorean>{card.ko}</CardKorean>

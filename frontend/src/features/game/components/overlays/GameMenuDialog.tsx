@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { createPortal } from 'react-dom'
 import type { GameScreenProps } from '../../types'
 import {
   ChoiceTitle,
@@ -19,7 +20,7 @@ const AudioSection = styled.section`
   gap: 0.45rem;
   margin: 0.75rem 0;
   padding: 0.7rem 0.8rem;
-  border: 1px solid rgb(41 56 124 / 22%);
+  border: 1px solid rgb(76 58 39 / 22%);
   border-radius: 0.8rem;
   background: rgb(255 255 255 / 58%);
 `
@@ -36,7 +37,7 @@ const AudioRow = styled.div`
 `
 
 const AudioLabel = styled.label`
-  color: #202d69;
+  color: #2b1c12;
   font-size: 0.82rem;
   font-weight: 750;
 `
@@ -46,23 +47,23 @@ const MuteButton = styled.button`
   width: 2.1rem;
   height: 2.1rem;
   place-items: center;
-  border: 1px solid #29387c;
+  border: 1px solid #3c291a;
   border-radius: 50%;
-  color: #202d69;
+  color: #2b1c12;
   background: #fff;
   cursor: pointer;
-  &:hover { background: #d9f3fb; }
+  &:hover { background: #fffaf0; }
 `
 
 const VolumeSlider = styled.input`
   width: 100%;
   margin: 0;
-  accent-color: #972e67;
+  accent-color: #9b7646;
   cursor: pointer;
 `
 
 const VolumeValue = styled.output`
-  color: #202d69;
+  color: #2b1c12;
   font-size: 0.78rem;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -83,15 +84,15 @@ const TransportButton = styled.button<{ $active?: boolean }>`
   justify-content: center;
   gap: 0.35rem;
   padding: 0.35rem 0.7rem;
-  border: 1px solid ${({ $active }) => ($active ? '#6e214f' : '#29387c')};
+  border: 1px solid ${({ $active }) => ($active ? '#2b1d14' : '#3c291a')};
   border-radius: 999px;
-  color: ${({ $active }) => ($active ? '#fff' : '#202d69')};
-  background: ${({ $active }) => ($active ? '#972e67' : '#fff')};
+  color: ${({ $active }) => ($active ? '#fff' : '#2b1c12')};
+  background: ${({ $active }) => ($active ? '#3c291b' : '#fffaf0')};
   font: inherit;
   font-size: 0.8rem;
   font-weight: 750;
   cursor: pointer;
-  &:hover { background: ${({ $active }) => ($active ? '#a43d78' : '#d9f3fb')}; }
+  &:hover { background: ${({ $active }) => ($active ? '#5b3e28' : '#f4e9d5')}; }
 `
 
 export function GameMenuDialog({
@@ -107,7 +108,7 @@ export function GameMenuDialog({
   const audio = useGameAudio()
   if (!modalOpen) return null
 
-  return (
+  return createPortal(
     <DialogBackdrop onMouseDown={(event) => { if (event.target === event.currentTarget) actions.setModalOpen(false) }}>
       <Dialog role="dialog" aria-modal="true" aria-labelledby="menu-title">
         <DialogHeader>
@@ -204,6 +205,7 @@ export function GameMenuDialog({
           </SecondaryButton>
         </DialogActions>
       </Dialog>
-    </DialogBackdrop>
+    </DialogBackdrop>,
+    document.body,
   )
 }

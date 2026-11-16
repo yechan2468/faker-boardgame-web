@@ -1,11 +1,37 @@
 import styled, { css, keyframes } from 'styled-components'
+import blackboardImage from '../../assets/image/pexels-blackboard-1846865.jpg'
+import woodImage from '../../assets/image/wood.jpg'
 
 export const Page = styled.main`
+  position: relative;
+  isolation: isolate;
   min-height: 100vh;
   padding: 1rem clamp(1rem, 3vw, 2.5rem) 1.5rem;
   overflow: hidden;
   color: #fff;
-  background: radial-gradient(ellipse at 50% 28%, #34499a 0%, #29387c 55%, #202d69 100%);
+  background: #2b1c12;
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background: url(${blackboardImage}) center / cover no-repeat;
+    filter: brightness(0.4) saturate(0.06);
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at center,
+      rgb(0 0 0 / 92%) 0%,
+      rgb(0 0 0 / 68%) 48%,
+      rgb(0 0 0 / 0%) 84%
+    );
+  }
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -34,26 +60,35 @@ export const Brand = styled.div`
   font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  text-shadow: 0 1px 0 rgb(18 25 65 / 45%);
+  text-shadow: 0 1px 0 rgb(24 16 10 / 45%);
 `
 export const MenuButton = styled.button`
-  border: 1px solid #1ea9e0;
+  border: 1px solid #9b7646;
   border-radius: 0.75rem;
   padding: 0.55rem 0.9rem;
-  color: #202124;
-  background: linear-gradient(180deg, #66d1f2, #1ea9e0);
-  box-shadow: 0 2px 0 #147aa3, 0 4px 8px rgb(18 25 65 / 22%);
+  color: #261e16;
+  background: linear-gradient(180deg, #ede3d2, #e3d4b8);
+  box-shadow: 0 2px 0 #735435, 0 4px 8px rgb(24 16 10 / 22%);
   font-weight: 750;
   cursor: pointer;
-  &:hover { background: linear-gradient(180deg, #83dcf5, #3bb9e7); }
+  &:hover { background: linear-gradient(180deg, #f5efe4, #e7d9c2); }
 `
 export const Board = styled.section`
   display: grid;
-  grid-template-rows: minmax(18rem, 2.4fr) minmax(12.5rem, 1.2fr);
+  grid-template-rows: minmax(24.3rem, 3fr) minmax(15.6rem, 1.2fr);
   gap: clamp(0.8rem, 2vh, 1.35rem);
-  width: min(100%, 90rem);
+  width: min(100%, 110.5rem);
   min-height: calc(100vh - 9rem);
   margin: 0 auto;
+  @media (max-width: 760px) {
+    grid-template-rows: minmax(22rem, 2.4fr) minmax(15.6rem, 1.2fr);
+  }
+  @media (max-height: 850px) {
+    grid-template-rows: minmax(21rem, 2.8fr) minmax(15.6rem, 1.2fr);
+  }
+  @media (max-height: 700px) {
+    grid-template-rows: minmax(17rem, 2.4fr) minmax(12rem, 1fr);
+  }
 `
 
 export const OpponentRow = styled.div`
@@ -69,18 +104,18 @@ export const OpponentCard = styled.button<{ $active: boolean; $selected: boolean
   width: 9rem;
   min-width: 9rem;
   padding: 0.75rem 1rem;
-  border: 1px solid ${({ $selected, $active }) => ($selected ? '#1ea9e0' : $active ? '#69d2f1' : '#6e214f')};
+  border: 1px solid ${({ $selected, $active }) => ($selected ? '#9b7646' : $active ? '#d8c39e' : '#2b1d14')};
   border-radius: 0.9rem;
   color: #fff;
-  background: linear-gradient(155deg, #a43d78, #972e67);
+  background: linear-gradient(155deg, #5b3e28, #3c291b);
   text-align: left;
   opacity: ${({ $alive }) => ($alive ? 1 : 0.56)};
   cursor: pointer;
   box-shadow: ${({ $active, $selected }) => ($selected
-    ? '0 2px 0 #6e214f, 0 0 0 2px rgb(30 169 224 / 30%)'
+    ? '0 2px 0 #2b1d14, 0 0 0 2px rgb(201 169 110 / 30%)'
     : $active
-      ? '0 2px 0 #202d69, 0 0 0 2px rgb(105 210 241 / 34%)'
-      : '0 2px 0 #6e214f, 0 4px 8px rgb(18 25 65 / 22%)')};
+      ? '0 2px 0 #2b1c12, 0 0 0 2px rgb(201 169 110 / 34%)'
+      : '0 2px 0 #2b1d14, 0 4px 8px rgb(24 16 10 / 22%)')};
 `
 export const PlayerName = styled.div`
   overflow: hidden;
@@ -116,19 +151,51 @@ export const PlayField = styled.div`
   position: relative;
   display: grid;
   place-items: center;
-  min-height: 18rem;
-  border: 1px solid #1ea9e0;
+  justify-self: center;
+  width: min(110.5%, calc(100vw - clamp(2rem, 6vw, 5rem)), 110.5rem);
+  min-height: 24.3rem;
+  transform: perspective(900px) rotateX(26deg);
+  transform-origin: center bottom;
+  transform-style: preserve-3d;
+  transition: transform 240ms ease;
+  border: 1px solid #9b7646;
   border-radius: 1.4rem;
-  background: radial-gradient(ellipse at center, #34499a 0%, #29387c 68%, #202d69 100%);
-  box-shadow: inset 0 2px 0 rgb(255 255 255 / 20%), 0 3px 0 #192557, 0 8px 18px rgb(18 25 65 / 22%);
+  background:
+    radial-gradient(ellipse 34% 48% at 50% 42%, rgb(255 226 150 / 18%) 0%, rgb(255 211 100 / 8%) 40%, rgb(255 208 110 / 0%) 78%),
+    radial-gradient(ellipse 48% 62% at 50% 34%, rgb(255 245 229 / 48%) 0%, rgb(255 174 129 / 24%) 38%, rgb(255 174 129 / 0%) 78%),
+    radial-gradient(ellipse at center, rgb(0 0 0 / 0%) 8%, rgb(8 7 8 / 28%) 52%, rgb(4 3 5 / 76%) 100%),
+    linear-gradient(rgb(0 0 0 / 58%), rgb(0 0 0 / 58%)),
+    url(${woodImage}) center / cover no-repeat;
+  box-shadow: inset 0 2px 0 rgb(255 255 255 / 20%), 0 3px 0 #21170f, 0 8px 18px rgb(24 16 10 / 22%);
+  @media (max-width: 760px) {
+    width: 100%;
+    min-height: 22rem;
+    transform: perspective(1100px) rotateX(18deg);
+  }
+  @media (max-height: 850px) {
+    min-height: 21rem;
+  }
+  @media (max-height: 700px) {
+    min-height: 17rem;
+  }
 `
 export const CenterContent = styled.div<{ $hidden: boolean }>`
   display: grid;
   justify-items: center;
   gap: 1.25rem;
   visibility: ${({ $hidden }) => ($hidden ? 'hidden' : 'visible')};
-  transform: translateY(-0.75rem);
+  transform: translateY(-0.75rem) scale(1.3);
+  transform-origin: center;
   transition: opacity 220ms ease;
+  @media (max-width: 1360px) {
+    transform: translateY(-0.75rem) scale(1.08);
+  }
+  @media (max-width: 1100px) {
+    transform: translateY(-0.75rem) scale(1);
+  }
+  @media (max-width: 760px) {
+    transform: translateY(-0.75rem) scale(1);
+  }
 `
 
 export const TableState = styled.div`
@@ -149,11 +216,11 @@ export const Supply = styled.div`
   text-align: center;
 `
 export const SupplyValue = styled.div`
-  color: #ffc6df;
+  color: #e8d6b8;
   font-size: 2rem;
   font-weight: 850;
   line-height: 1;
-  text-shadow: 0 2px 0 #6e214f;
+  text-shadow: 0 2px 0 #2b1d14;
 `
 export const Deck = styled.div`
   display: grid;
@@ -165,11 +232,11 @@ export const Deck = styled.div`
   text-align: center;
 `
 export const DeckCount = styled.div`
-  color: #69d2f1;
+  color: #d8c39e;
   font-size: 2rem;
   font-weight: 850;
   line-height: 1;
-  text-shadow: 0 2px 0 #14539a;
+  text-shadow: 0 2px 0 #3b291b;
 `
 export const DeclarationPanel = styled.div`
   display: grid;
@@ -197,41 +264,43 @@ const sharedCardSurface = css<SharedCardProps>`
   width: clamp(6.3rem, 11vw, 8rem);
   height: clamp(8.3rem, 17vh, 11rem);
   padding: 0.55rem 0.45rem 0.65rem;
-  border: 2px solid #17234f;
+  border: 2px solid #392719;
   border-radius: 0.8rem;
-  color: #202124;
+  color: #261e16;
   isolation: isolate;
   background:
-    radial-gradient(ellipse at var(--card-gloss-position, 17% 7%), rgb(255 255 255 / 58%) 0%, rgb(255 255 255 / 20%) 19%, transparent 42%),
-    linear-gradient(145deg, rgb(255 255 255 / 13%) 0%, transparent 38%, rgb(20 45 95 / 9%) 100%),
-    linear-gradient(155deg, #59c9ec 0%, #1ea9e0 100%);
+    radial-gradient(ellipse at var(--card-gloss-position, 17% 7%), rgb(255 255 255 / var(--card-gloss-opacity, 58%)) 0%, rgb(255 255 255 / var(--card-gloss-fade-opacity, 20%)) 19%, transparent 42%),
+    linear-gradient(145deg, rgb(255 255 255 / 13%) 0%, transparent 38%, rgb(58 39 23 / 9%) 100%),
+    linear-gradient(155deg, #fffefa 0%, #f8f4ea 100%);
   box-shadow: ${({ $selected }) => ($selected
-    ? '0 3px 0 #111c43, 0 0 0 2px rgb(41 56 124 / 24%), 0 8px 14px rgb(18 25 65 / 20%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%)'
-    : '0 3px 0 #111c43, 0 6px 12px rgb(18 25 65 / 16%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%)')};
+    ? '0 3px 0 #1e140d, 0 0 0 2px rgb(201 169 110 / 24%), 0 8px 14px rgb(24 16 10 / 20%), inset var(--card-inner-shadow-x, 0px) var(--card-inner-shadow-y, 8px) var(--card-inner-shadow-blur, 14px) var(--card-inner-shadow-spread, -4px) rgb(0 0 0 / var(--card-inner-shadow-opacity, 0.12)), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(30 20 12 / 12%)'
+    : '0 3px 0 #1e140d, 0 6px 12px rgb(24 16 10 / 16%), inset var(--card-inner-shadow-x, 0px) var(--card-inner-shadow-y, 8px) var(--card-inner-shadow-blur, 14px) var(--card-inner-shadow-spread, -4px) rgb(0 0 0 / var(--card-inner-shadow-opacity, 0.12)), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(30 20 12 / 12%)')};
   &::before {
     content: '';
     position: absolute;
     z-index: 2;
     inset: 0.28rem;
-    border: 1px solid #29387c;
+    border: 1px solid #3c291a;
     border-radius: 0.52rem;
-    box-shadow: inset 0 0 0 1px rgb(23 35 79 / 22%);
+    box-shadow: inset 0 0 0 1px rgb(60 42 25 / 22%);
     pointer-events: none;
   }
 `
 
-export const CardCornerValue = styled.span<{ $corner: 'top-left' | 'bottom-right' }>`
+export const CardCornerValue = styled.span<{ $corner: 'top-left' | 'bottom-right'; $value: number }>`
   position: absolute;
   z-index: 3;
   ${({ $corner }) => $corner === 'top-left'
     ? css`top: 0.72rem; left: 0.72rem;`
     : css`right: 0.72rem; bottom: 0.72rem; transform: rotate(180deg);`}
-  color: #202d69;
+  color: #2b1c12;
   font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: clamp(1.05rem, 1.6vw, 1.4rem);
   font-variant-numeric: lining-nums;
   font-weight: 900;
   line-height: 0.9;
+  text-decoration: ${({ $value }) => ($value === 6 || $value === 9 ? 'underline' : 'none')};
+  text-underline-offset: 0.08em;
   text-shadow: 0 1px 0 rgb(255 255 255 / 65%);
   pointer-events: none;
   user-select: none;
@@ -251,7 +320,7 @@ export const DeclarationText = styled.div`
   line-height: 1.3;
 `
 export const VerdictText = styled.div<{ $truthful: boolean }>`
-  color: ${({ $truthful }) => ($truthful ? '#bcefff' : '#ffc6df')};
+  color: ${({ $truthful }) => ($truthful ? '#efe2c7' : '#e8d6b8')};
   font-size: clamp(0.82rem, 1.3vw, 1.05rem);
   font-weight: 800;
   line-height: 1.3;
@@ -286,7 +355,7 @@ export const DeclaredCard = styled.div<{
   ${({ $previewing }) => $previewing && css`
     transform: translateY(-0.3rem) scale(1.035);
     opacity: 0.6;
-    box-shadow: 0 5px 0 #111c43, 0 12px 20px rgb(18 25 65 / 28%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%);
+    box-shadow: 0 5px 0 #1e140d, 0 12px 20px rgb(24 16 10 / 28%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(30 20 12 / 12%);
   `}
   ${({ $flipPhase }) => $flipPhase === 'hide' && css`
     animation: ${flipCardAway} 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
@@ -300,7 +369,7 @@ export const DeclaredCard = styled.div<{
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const DeclaredCardName = styled.div`
-  color: #202d69;
+  color: #2b1c12;
   font-family: 'Noto Serif KR', 'Batang', 'BatangChe', 'Nanum Myeongjo', Georgia, 'Times New Roman', serif;
   font-size: clamp(0.88rem, 1.5vw, 1.15rem);
   font-weight: 900;
@@ -308,7 +377,7 @@ export const DeclaredCardName = styled.div`
   transform: translateY(0.25rem);
 `
 export const DeclaredCardEnglish = styled.div`
-  color: #202d69;
+  color: #2b1c12;
   font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: 0.64rem;
   font-weight: 800;
@@ -327,7 +396,7 @@ export const Status = styled.div`
   font-size: 1rem;
   font-weight: 650;
   text-align: center;
-  &[data-error='true'] { color: #bcefff; }
+  &[data-error='true'] { color: #efe2c7; }
   &[data-has-personal-timer='true'] {
     animation: ${personalTimerStatusPulse} 2.4s ease-in-out infinite;
   }
@@ -349,7 +418,7 @@ export const RefreshButton = styled.button`
   margin-left: 0.65rem;
   padding: 0;
   border: 0;
-  color: #202124;
+  color: #261e16;
   background: transparent;
   font: inherit;
   font-size: 0.92em;
@@ -371,22 +440,41 @@ export const TurnOverlay = styled.div`
   color: #fff;
   font-size: clamp(2rem, 6vw, 4.5rem);
   font-weight: 900;
-  text-shadow: 0 0 1.5rem rgb(30 169 224 / 85%);
+  text-shadow: 0 0 1.5rem rgb(201 169 110 / 85%);
   animation: ${TurnGlow} 2s ease both;
 `
 
 const actionChoicesRise = keyframes`
-  from { opacity: 0.95; transform: translateY(0.55rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0.76; transform: translateY(0.55rem); }
+  to { opacity: 0.8; transform: translateY(0); }
+`
+export const GameActionLayer = styled.div`
+  position: fixed;
+  z-index: 7;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 1rem 1rem calc(clamp(13rem, 24vh, 18rem) + 5vh);
+  pointer-events: none;
 `
 export const ActionChoices = styled.div`
-  position: absolute;
-  inset: auto 0 1.5rem;
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
-  width: min(100% - 2rem, 68rem);
-  margin: auto;
+  width: min(100%, 68rem);
+  margin: 0;
+  padding: 0.85rem;
+  border: 1px solid transparent;
+  border-radius: 1.25rem;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+  opacity: 0.8;
+  max-height: min(60vh, 38rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   animation: ${actionChoicesRise} 280ms cubic-bezier(0.2, 0.75, 0.25, 1) both;
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `
@@ -404,11 +492,11 @@ export const Choice = styled.div<{ $center?: boolean }>`
   width: ${({ $center }) => ($center ? 'min(100%, 28rem)' : 'auto')};
   min-height: 4.3rem;
   padding: 0.7rem 0.85rem;
-  border: 1px solid #1ea9e0;
+  border: 1px solid #9b7646;
   border-radius: 0.9rem;
-  color: #202124;
-  background: linear-gradient(155deg, #d9f3fb, #bceafa);
-  box-shadow: 0 2px 0 #79c6df, 0 5px 12px rgb(18 25 65 / 14%);
+  color: #261e16;
+  background: linear-gradient(155deg, #ede3d2, #e3d4b8);
+  box-shadow: 0 2px 0 #b8a17a, 0 5px 12px rgb(24 16 10 / 14%);
   text-align: center;
 `
 const actionEffectExpand = keyframes`
@@ -471,7 +559,7 @@ export const TruthfulDeclarationChoice = styled(Choice)`
 `
 export const ChoiceTitle = styled.div`
   margin-bottom: 0.45rem;
-  color: #202124;
+  color: #261e16;
   font-size: 0.78rem;
   font-weight: 750;
 `
@@ -480,7 +568,7 @@ export const CardEffectText = styled.p`
   max-width: 38rem;
   padding: 0.55rem 0.7rem;
   border-radius: 0.65rem;
-  color: #202d69;
+  color: #2b1c12;
   background: rgb(255 255 255 / 65%);
   font-size: 0.75rem;
   font-weight: 650;
@@ -495,12 +583,12 @@ export const Pills = styled.div`
 `
 
 export const Pill = styled.button.attrs({ 'data-game-sound': 'pill' })<{ $selected?: boolean }>`
-  border: 1px solid ${({ $selected }) => ($selected ? '#202d69' : '#168dbb')};
+  border: 1px solid ${({ $selected }) => ($selected ? '#2b1c12' : '#765535')};
   border-radius: 999px;
   padding: 0.3rem 0.7rem;
-  color: ${({ $selected }) => ($selected ? '#fff' : '#202124')};
-  background: ${({ $selected }) => ($selected ? '#29387c' : '#c8effa')};
-  box-shadow: 0 1px 0 ${({ $selected }) => ($selected ? '#202d69' : '#79c6df')};
+  color: ${({ $selected }) => ($selected ? '#fff' : '#261e16')};
+  background: ${({ $selected }) => ($selected ? '#3c291a' : '#f4e9d5')};
+  box-shadow: 0 1px 0 ${({ $selected }) => ($selected ? '#2b1c12' : '#b8a17a')};
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -508,38 +596,38 @@ export const Pill = styled.button.attrs({ 'data-game-sound': 'pill' })<{ $select
 `
 export const PillRank = styled.sup<{ $selected?: boolean }>`
   margin-right: 0.22rem;
-  color: ${({ $selected }) => ($selected ? '#fff' : '#202d69')};
+  color: ${({ $selected }) => ($selected ? '#fff' : '#2b1c12')};
   font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: 0.75em;
   font-weight: 900;
   line-height: 0;
 `
 export const ActionButton = styled.button`
-  border: 1px solid #6e214f;
+  border: 1px solid #2b1d14;
   border-radius: 999px;
   padding: 0.4rem 0.9rem;
   color: #fff;
-  background: linear-gradient(180deg, #a43d78, #972e67);
-  box-shadow: 0 2px 0 #6e214f;
+  background: linear-gradient(180deg, #5b3e28, #3c291b);
+  box-shadow: 0 2px 0 #2b1d14;
   font-weight: 750;
   cursor: pointer;
-  &:hover { background: linear-gradient(180deg, #b54b88, #972e67); }
+  &:hover { background: linear-gradient(180deg, #765235, #3c291b); }
   &:disabled { cursor: not-allowed; opacity: 0.48; }
 `
 export const TruthfulDeclarationButton = styled(ActionButton).attrs({ 'data-game-sound': 'pill' })<{ $selected?: boolean }>`
   min-height: 2.45rem;
   padding: 0.48rem 1.05rem;
-  border-color: ${({ $selected }) => ($selected ? '#202d69' : '#168dbb')};
-  color: ${({ $selected }) => ($selected ? '#fff' : '#202d69')};
+  border-color: ${({ $selected }) => ($selected ? '#2b1c12' : '#765535')};
+  color: ${({ $selected }) => ($selected ? '#fff' : '#2b1c12')};
   background: ${({ $selected }) => ($selected
-    ? 'linear-gradient(180deg, #30a9e0, #29387c)'
-    : 'linear-gradient(180deg, #e6f9ff, #bceafa)')};
-  box-shadow: 0 2px 0 ${({ $selected }) => ($selected ? '#17234f' : '#79c6df')};
+    ? 'linear-gradient(180deg, #765535, #3c291a)'
+    : 'linear-gradient(180deg, #fffdf6, #e8d9be)')};
+  box-shadow: 0 2px 0 ${({ $selected }) => ($selected ? '#392719' : '#b8a17a')};
   font-size: 0.85rem;
   font-weight: 800;
   &:hover { background: ${({ $selected }) => ($selected
-    ? 'linear-gradient(180deg, #55bce8, #354a9a)'
-    : 'linear-gradient(180deg, #f5fcff, #c8effa)')}; }
+    ? 'linear-gradient(180deg, #8b6a42, #59412a)'
+    : 'linear-gradient(180deg, #fffaf0, #f4e9d5)')}; }
 `
 export const BottomArea = styled.div`
   display: grid;
@@ -547,7 +635,7 @@ export const BottomArea = styled.div`
   align-items: end;
   gap: clamp(0.5rem, 2vw, 1.5rem);
   width: 100%;
-  min-height: 13rem;
+  min-height: 15.6rem;
 `
 
 export const OwnIdentity = styled.div`
@@ -558,10 +646,10 @@ export const OwnIdentity = styled.div`
   width: min(9rem, 100%);
   min-width: 0;
   padding: 0.75rem 0.9rem;
-  border: 1px solid #6e214f;
+  border: 1px solid #2b1d14;
   border-radius: 0.9rem;
-  background: linear-gradient(155deg, #a43d78, #972e67);
-  box-shadow: 0 2px 0 #6e214f;
+  background: linear-gradient(155deg, #5b3e28, #3c291b);
+  box-shadow: 0 2px 0 #2b1d14;
 `
 export const OwnName = styled(PlayerName)`
   width: 100%;
@@ -577,6 +665,9 @@ export const TurnOrderPreview = styled.div`
   min-width: 0;
   width: 100%;
   flex-wrap: wrap;
+  @media (max-width: 900px) {
+    gap: 0.35rem;
+  }
 `
 
 export const TurnOrderItem = styled.div<{ $current: boolean }>`
@@ -587,7 +678,7 @@ export const TurnOrderItem = styled.div<{ $current: boolean }>`
 `
 
 export const TurnOrderLabel = styled.span`
-  color: #69d2f1;
+  color: #d8c39e;
   font-size: clamp(0.9rem, 1.3vw, 1.15rem);
   font-weight: 750;
   white-space: nowrap;
@@ -600,6 +691,10 @@ export const TurnOrderName = styled.div<{ $current: boolean }>`
   font-weight: ${({ $current }) => ($current ? 900 : 700)};
   text-overflow: ellipsis;
   white-space: nowrap;
+  @media (max-width: 900px) {
+    max-width: ${({ $current }) => ($current ? '9rem' : '6rem')};
+    font-size: ${({ $current }) => ($current ? 'clamp(1.35rem, 2.8vw, 1.8rem)' : 'clamp(1rem, 2vw, 1.3rem)')};
+  }
 `
 export const Hand = styled.div`
   display: flex;
@@ -608,6 +703,22 @@ export const Hand = styled.div`
   gap: clamp(0.45rem, 1.7vw, 1.1rem);
   min-width: 0;
   padding: 0.6rem 0.5rem 0;
+  & > button:first-child {
+    position: relative;
+    top: 0.35rem;
+    rotate: -5deg;
+    transform-origin: right bottom;
+  }
+  & > button:last-child {
+    position: relative;
+    top: -0.45rem;
+    rotate: 5deg;
+    transform-origin: left bottom;
+  }
+  & > button:first-child:last-child {
+    top: 0;
+    rotate: 0deg;
+  }
 `
 
 export const CardArtFrame = styled.div<{ $large?: boolean }>`
@@ -625,7 +736,7 @@ export const CardArtFrame = styled.div<{ $large?: boolean }>`
 `
 export const CardEffectIcons = styled.span`
   min-height: 1rem;
-  color: #202d69;
+  color: #2b1c12;
   font-size: clamp(0.78rem, 1.2vw, 0.98rem);
   line-height: 1;
   letter-spacing: 0.04em;
@@ -634,15 +745,15 @@ export const CardEffectIcons = styled.span`
 `
 export const GameCard = styled.button<{ $selected: boolean }>`
   ${sharedCardSurface}
-  width: clamp(7.5rem, 13vw, 10rem);
-  height: clamp(10rem, 21vh, 13rem);
+  width: clamp(9rem, 15.6vw, 12rem);
+  height: clamp(12rem, 25.2vh, 15.6rem);
   padding: 0.65rem 0.55rem 0.75rem;
-  ${CardArtFrame} { height: clamp(4.7rem, 9vh, 5.7rem); }
+  ${CardArtFrame} { height: clamp(5.64rem, 10.8vh, 6.84rem); }
   position: relative;
   z-index: ${({ $selected }) => ($selected ? 2 : 0)};
   transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'none')};
   ${({ $selected }) => $selected && css`
-    box-shadow: 0 4px 0 #111c43, 0 0 0 3px rgb(105 210 241 / 72%), 0 14px 24px rgb(18 25 65 / 35%), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(17 28 67 / 12%);
+    box-shadow: 0 4px 0 #1e140d, 0 0 0 3px rgb(201 169 110 / 72%), 0 30px 48px rgb(0 0 0 / 82%), 0 14px 24px rgb(0 0 0 / 54%), inset var(--card-inner-shadow-x, 0px) var(--card-inner-shadow-y, 8px) var(--card-inner-shadow-blur, 14px) var(--card-inner-shadow-spread, -4px) rgb(0 0 0 / var(--card-inner-shadow-opacity, 0.12)), inset 0 1px 0 rgb(255 255 255 / 72%), inset 0 -2px 0 rgb(30 20 12 / 12%);
     animation: ${liftSelectedCard} 260ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
   `}
   cursor: pointer;
@@ -653,10 +764,24 @@ export const GameCard = styled.button<{ $selected: boolean }>`
   &:hover {
     transform: ${({ $selected }) => ($selected ? 'translateY(-1.15rem) scale(1.07)' : 'translateY(-0.35rem)')};
   }
+  @media (max-width: 900px) {
+    width: clamp(8rem, 13vw, 9rem);
+    height: clamp(10.5rem, 22vh, 12rem);
+    ${CardArtFrame} { height: clamp(4.8rem, 9vh, 5.64rem); }
+  }
+  @media (max-width: 760px) {
+    width: clamp(7.5rem, 24vw, 9rem);
+    height: clamp(10rem, 28vh, 12rem);
+    ${CardArtFrame} { height: clamp(4.7rem, 10vh, 5.64rem); }
+  }
+  @media (max-height: 700px) {
+    height: clamp(8.5rem, 20vh, 10rem);
+    ${CardArtFrame} { height: clamp(3.8rem, 8vh, 4.7rem); }
+  }
   @media (prefers-reduced-motion: reduce) { animation: none; }
 `
 export const CardKorean = styled.span`
-  color: #202d69;
+  color: #2b1c12;
   font-family: 'Noto Serif KR', 'Batang', 'BatangChe', 'Nanum Myeongjo', Georgia, 'Times New Roman', serif;
   font-size: clamp(1rem, 1.7vw, 1.3rem);
   font-weight: 900;
@@ -664,19 +789,19 @@ export const CardKorean = styled.span`
   transform: translateY(0.25rem);
 `
 export const CardEnglish = styled.span`
-  color: #202d69;
+  color: #2b1c12;
   font-family: 'Bodoni MT', 'Didot', Georgia, 'Times New Roman', serif;
   font-size: 0.72rem;
   font-weight: 800;
 `
 export const DialogBackdrop = styled.div`
   position: fixed;
-  z-index: 10;
+  z-index: 2147483647;
   inset: 0;
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgb(18 25 65 / 70%);
+  background: rgb(24 16 10 / 70%);
   backdrop-filter: blur(5px);
 `
 
@@ -685,12 +810,12 @@ export const Dialog = styled.section`
   max-height: min(85vh, 42rem);
   overflow: auto;
   padding: 1.4rem;
-  border: 1px solid #1ea9e0;
+  border: 1px solid #9b7646;
   border-radius: 1.1rem;
-  color: #202124;
-  background: linear-gradient(155deg, #d9f3fb, #c2ebf7);
-  box-shadow: 0 2px 0 #79c6df, 0 1.5rem 5rem rgb(18 25 65 / 24%);
-  & ${Status} { color: #202124; }
+  color: #261e16;
+  background: linear-gradient(155deg, #fffaf0, #f2e7d3);
+  box-shadow: 0 2px 0 #b8a17a, 0 1.5rem 5rem rgb(24 16 10 / 24%);
+  & ${Status} { color: #261e16; }
 `
 export const DialogHeader = styled.div`
   display: flex;
@@ -699,10 +824,10 @@ export const DialogHeader = styled.div`
   margin-bottom: 1rem;
   h2 { margin: 0; font-size: 1.3rem; }
   button {
-    border-color: #202d69;
+    border-color: #2b1c12;
     color: #fff;
-    background: linear-gradient(180deg, #3d55a0, #29387c);
-    box-shadow: 0 2px 0 #202d69;
+    background: linear-gradient(180deg, #5b432e, #3c291a);
+    box-shadow: 0 2px 0 #2b1c12;
   }
 `
 
@@ -710,8 +835,8 @@ export const LeaderRow = styled.div`
   display: flex;
   justify-content: space-between;
   padding: 0.7rem 0.2rem;
-  border-bottom: 1px solid rgb(81 98 120 / 18%);
-  color: #202124;
+  border-bottom: 1px solid rgb(76 58 39 / 18%);
+  color: #261e16;
 `
 export const DialogActions = styled.div`
   display: flex;
@@ -721,12 +846,12 @@ export const DialogActions = styled.div`
 `
 
 export const SecondaryButton = styled.button<{ $danger?: boolean }>`
-  border: 1px solid ${({ $danger }) => ($danger ? '#6e214f' : '#168dbb')};
+  border: 1px solid ${({ $danger }) => ($danger ? '#2b1d14' : '#765535')};
   border-radius: 0.7rem;
   padding: 0.55rem 0.8rem;
-  color: ${({ $danger }) => ($danger ? '#fff' : '#202124')};
-  background: ${({ $danger }) => ($danger ? 'linear-gradient(180deg, #a43d78, #972e67)' : 'linear-gradient(180deg, #d9f3fb, #bceafa)')};
-  box-shadow: 0 2px 0 ${({ $danger }) => ($danger ? '#6e214f' : '#79c6df')};
+  color: ${({ $danger }) => ($danger ? '#fff' : '#261e16')};
+  background: ${({ $danger }) => ($danger ? 'linear-gradient(180deg, #5b3e28, #3c291b)' : 'linear-gradient(180deg, #fffaf0, #e8d9be)')};
+  box-shadow: 0 2px 0 ${({ $danger }) => ($danger ? '#2b1d14' : '#b8a17a')};
   cursor: pointer;
   &:disabled { cursor: not-allowed; opacity: 0.5; }
 `
@@ -736,17 +861,17 @@ export const ResultBanner = styled.div`
   left: 50%;
   width: min(90%, 38rem);
   padding: 0.75rem 1rem;
-  border: 1px solid #1ea9e0;
+  border: 1px solid #9b7646;
   border-radius: 0.8rem;
-  color: #202124;
-  background: linear-gradient(160deg, #d9f3fb, #bceafa);
-  box-shadow: 0 2px 0 #79c6df, 0 6px 12px rgb(18 25 65 / 14%);
+  color: #261e16;
+  background: linear-gradient(160deg, #fffaf0, #e8d9be);
+  box-shadow: 0 2px 0 #b8a17a, 0 6px 12px rgb(24 16 10 / 14%);
   text-align: center;
   transform: translateX(-50%);
 `
 export const ErrorText = styled.div`
   margin-top: 0.6rem;
-  color: #202124;
+  color: #261e16;
   font-size: 0.85rem;
   text-align: center;
 `
