@@ -16,11 +16,14 @@ export function DefenseWaitingPanel({ game, mustDefend }: GameScreenProps) {
               {getPlayerName(game.players, defense.playerId)}: {getCard(defense.declaredCardId).ko}
             </Pill>
           ))}
-          {pending.defensePasses.map((playerId) => (
-            <Pill key={playerId} type="button" disabled>
-              {getPlayerName(game.players, playerId)}: 방어 안 함
-            </Pill>
-          ))}
+          {pending.defensePasses.map((playerId) => {
+            const player = game.players.find((candidate) => candidate.id === playerId)
+            return (
+              <Pill key={playerId} type="button" disabled>
+                {getPlayerName(game.players, playerId)}: {player?.cardCount === 0 ? '손패 없음 · 자동 피격' : '방어 안 함'}
+              </Pill>
+            )
+          })}
           {pending.targetIds.filter((playerId) => !pending.defensePasses.includes(playerId)).map((playerId) => (
             <Pill key={playerId} type="button" disabled>
               {getPlayerName(game.players, playerId)}: 선택 대기

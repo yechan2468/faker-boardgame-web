@@ -171,8 +171,11 @@ export function useGameController(): GameControllerResult {
     && game.turn.phase === 'RESOLVED'
     && game.turn.number === defenseOutcomeNotice.turnNumber
     ? [
-        defenseOutcomeNotice.passers.length > 0
-          ? `${defenseOutcomeNotice.passers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+        defenseOutcomeNotice.handlessPassers.length > 0
+          ? `${defenseOutcomeNotice.handlessPassers.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님은 손패가 없어 방어하지 못해 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
+          : null,
+        defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).length > 0
+          ? `${defenseOutcomeNotice.passers.filter((playerId) => !defenseOutcomeNotice.handlessPassers.includes(playerId)).map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님이 방어를 포기하여 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`
           : null,
         defenseOutcomeNotice.failedDefenders.length > 0
           ? `${defenseOutcomeNotice.failedDefenders.map((playerId) => getPlayerName(game.players, playerId)).join(', ')} 님의 방어가 거짓으로 밝혀져 체력이 ${defenseOutcomeNotice.damageAmount} 감소합니다.`

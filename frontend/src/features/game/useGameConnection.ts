@@ -54,6 +54,20 @@ export function useGameConnection({
             ? statePayload.pendingAction ?? null
             : (payload.pendingAction as GameState['pendingAction'] | undefined) ?? null
           const previousPendingAction = previousState?.pendingAction
+          const attackChallengeTruthful = payload.defenseIndex === -1 && typeof payload.truthful === 'boolean'
+            ? payload.truthful
+            : previousPendingAction?.attackerTruthful
+          const handlessTargetIds = previousPendingAction?.targetIds.filter((playerId) =>
+            previousState?.players.find((player) => player.id === playerId)?.cardCount === 0,
+          ) ?? []
+          const automaticallyResolvedEmptyHandAttack = Boolean(
+            previousState?.turn.phase === 'SUSPICION'
+              && previousPendingAction
+              && ['assassin', 'warlock', 'red-dragon', 'archer', 'bomber'].includes(previousPendingAction.declaredCardId)
+              && previousPendingAction.targetIds.length > 0
+              && handlessTargetIds.length === previousPendingAction.targetIds.length
+              && attackChallengeTruthful !== false,
+          )
           const alchemistTargetId = previousPendingAction?.targetIds[0]
           const challengedAlchemistTruth = payload.declaredCardId === 'alchemist'
             && payload.defenseIndex === -1
@@ -77,7 +91,9 @@ export function useGameConnection({
           }
           if (
             previousState?.status === 'IN_GAME'
-            && (previousState.turn.phase === 'DEFENSE' || previousState.turn.phase === 'DEFENSE_SUSPICION')
+            && (previousState.turn.phase === 'DEFENSE'
+              || previousState.turn.phase === 'DEFENSE_SUSPICION'
+              || automaticallyResolvedEmptyHandAttack)
             && previousPendingAction
             && nextTurn?.phase === 'RESOLVED'
             && nextPendingAction === null
@@ -85,6 +101,7 @@ export function useGameConnection({
           ) {
             const defendedPlayerIds = new Set(previousPendingAction.defenses.map((defense) => defense.playerId))
             const passers = previousPendingAction.targetIds.filter((playerId) => !defendedPlayerIds.has(playerId))
+            const handlessPassers = passers.filter((playerId) => handlessTargetIds.includes(playerId))
             const failedDefenders = previousPendingAction.defenses
               .filter((defense) => defense.truthful === false)
               .map((defense) => defense.playerId)
@@ -97,6 +114,7 @@ export function useGameConnection({
               turnNumber: nextTurn.number,
               damageAmount,
               passers,
+              handlessPassers,
               successfulDefenders,
               failedDefenders,
             })

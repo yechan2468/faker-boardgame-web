@@ -222,19 +222,35 @@ final class GameTurnService {
         if (defendableAttack) {
             state.pendingPlay.defensePasses.clear();
             state.turn = new TurnState(state.turn.number(), state.turn.activePlayerId(), "DEFENSE");
+            passHandlessTargets();
+            advanceAfterDefenseIfComplete();
         } else {
             finishPendingPlay();
         }
     }
 
     private void advanceAfterDefenseIfComplete() {
-        if (state.pendingPlay != null && "DEFENSE".equals(state.turn.phase())
-                && state.pendingPlay.targets.stream().allMatch(state.pendingPlay.defensePasses::contains)) {
+        if (state.pendingPlay == null || !"DEFENSE".equals(state.turn.phase())) return;
+        passHandlessTargets();
+        if (state.pendingPlay.targets.stream().allMatch(state.pendingPlay.defensePasses::contains)) {
             state.pendingPlay.suspicionPasses.clear();
             if (state.pendingPlay.defenses.isEmpty()) finishPendingPlay();
             else {
                 state.pendingPlay.defenseSuspicionCursor = 0;
                 state.turn = new TurnState(state.turn.number(), state.turn.activePlayerId(), "DEFENSE_SUSPICION");
+            }
+        }
+    }
+
+    private void passHandlessTargets() {
+        if (state.pendingPlay == null) return;
+        for (String targetId : state.pendingPlay.targets) {
+            GamePlayer target = state.playersBySession.values().stream()
+                    .filter(candidate -> candidate.id().equals(targetId))
+                    .findFirst()
+                    .orElse(null);
+            if (target == null || target.health() <= 0 || target.cards().isEmpty()) {
+                state.pendingPlay.defensePasses.add(targetId);
             }
         }
     }

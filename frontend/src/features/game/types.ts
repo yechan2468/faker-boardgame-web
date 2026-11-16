@@ -22,6 +22,7 @@ export type DefenseOutcomeNotice = {
   turnNumber: number
   damageAmount: number
   passers: string[]
+  handlessPassers: string[]
   successfulDefenders: string[]
   failedDefenders: string[]
 }
