@@ -16,35 +16,22 @@ export function SuspicionPanel(props: GameScreenProps) {
   if (!pending || (game.turn.phase !== 'SUSPICION' && game.turn.phase !== 'DEFENSE_SUSPICION') || !self?.alive) {
     return null
   }
+  const activeDefense = game.turn.phase === 'DEFENSE_SUSPICION'
+    ? pending.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)
+    : undefined
 
   return (
     <ActionChoices>
-      {game.turn.phase === 'DEFENSE_SUSPICION' && pending.defenses
-        .filter((defense) => defense.index === pending.suspicionDefenseIndex)
-        .map((defense) => (
-          <Choice key={defense.index}>
-            <ChoiceTitle>
-              {getPlayerName(game.players, defense.playerId)}의 {getCard(defense.declaredCardId).ko} 방어
-            </ChoiceTitle>
-            {defense.truthful === null ? (
-              game.viewerId !== defense.playerId && (
-                <ActionButton
-                  type="button"
-                  onClick={() => actions.publish('/app/game/bluff/challenge', {
-                    challengedPlayerId: defense.playerId,
-                    defenseIndex: defense.index,
-                  })}
-                >
-                  방어 의심하기
-                </ActionButton>
-              )
-            ) : (
-              <ChoiceTitle>
-                {defense.truthful ? '진실' : '거짓'} · 실제 카드: {getCard(defense.actualCardId ?? '').ko}
-              </ChoiceTitle>
-            )}
-          </Choice>
-        ))}
+      {activeDefense && activeDefense.truthful !== null && activeDefense.playerId !== game.viewerId && (
+        <Choice>
+          <ChoiceTitle>
+            {getPlayerName(game.players, activeDefense.playerId)}의 {getCard(activeDefense.declaredCardId).ko} 방어
+          </ChoiceTitle>
+          <ChoiceTitle>
+            {activeDefense.truthful ? '진실' : '거짓'} · 실제 카드: {getCard(activeDefense.actualCardId ?? '').ko}
+          </ChoiceTitle>
+        </Choice>
+      )}
       <Choice $center>
         <ChoiceTitle>
           {suspicionPasserNames.length > 0
@@ -64,6 +51,17 @@ export function SuspicionPanel(props: GameScreenProps) {
               의심하기
             </ActionButton>
           )}
+        {activeDefense && activeDefense.truthful === null && game.viewerId !== activeDefense.playerId && (
+          <ActionButton
+            type="button"
+            onClick={() => actions.publish('/app/game/bluff/challenge', {
+              challengedPlayerId: activeDefense.playerId,
+              defenseIndex: activeDefense.index,
+            })}
+          >
+            의심하기
+          </ActionButton>
+        )}
         {game.viewerId !== suspicionCardOwnerId && (
           <ActionButton type="button" onClick={actions.passSuspicion} disabled={hasPassedSuspicion}>
             {hasPassedSuspicion ? '패스 완료 · 다른 플레이어 대기 중' : '패스하기'}

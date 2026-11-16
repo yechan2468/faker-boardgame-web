@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
 import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
-import type { AttackResolutionNotice, GameScreenProps } from './types'
+import type { AttackResolutionNotice, DefenseResolutionNotice, GameScreenProps } from './types'
 import { useGameConnection } from './useGameConnection'
 
 async function fetchGameState(): Promise<GameState> {
@@ -49,6 +49,7 @@ export function useGameController(): GameControllerResult {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [declarationNotice, setDeclarationNotice] = useState<DeclarationNotice | null>(null)
   const [attackResolutionNotice, setAttackResolutionNotice] = useState<AttackResolutionNotice | null>(null)
+  const [defenseResolutionNotice, setDefenseResolutionNotice] = useState<DefenseResolutionNotice | null>(null)
   const [turnIntro, setTurnIntro] = useState(false)
   const [hostActionPending, setHostActionPending] = useState(false)
   const errorTimerRef = useRef<number | undefined>(undefined)
@@ -74,6 +75,7 @@ export function useGameController(): GameControllerResult {
     setHand,
     setDeclarationNotice,
     setAttackResolutionNotice,
+    setDefenseResolutionNotice,
   })
 
   useEffect(() => {
@@ -94,9 +96,11 @@ export function useGameController(): GameControllerResult {
     if (gameStatus === 'IN_GAME' && previousGameStatusRef.current === 'LOBBY') {
       setDeclarationNotice(null)
       setAttackResolutionNotice(null)
+      setDefenseResolutionNotice(null)
     } else if (gameStatus === 'LOBBY' && !game?.matchResult) {
       setDeclarationNotice(null)
       setAttackResolutionNotice(null)
+      setDefenseResolutionNotice(null)
     }
     previousGameStatusRef.current = gameStatus ?? null
   }, [gameStatus, game?.matchResult])
@@ -144,6 +148,15 @@ export function useGameController(): GameControllerResult {
       ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
       : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 선언한 카드의 능력은 무효화됩니다.`
     : null
+  const defenseResolutionStatus = defenseResolutionNotice
+    && game?.status === 'IN_GAME'
+    && (game.turn.phase === 'DEFENSE_SUSPICION' || game.turn.phase === 'RESOLVED')
+    && game.turn.activePlayerId === defenseResolutionNotice.actorId
+    && game.turn.number === defenseResolutionNotice.turnNumber
+    ? defenseResolutionNotice.truthful
+      ? `잘못 의심한 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님의 방어 카드 능력이 그대로 적용됩니다.`
+      : `거짓이 발각되어 ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님이 체력 토큰을 2개 잃고 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력 토큰을 2개 얻습니다. 방어 카드의 능력은 무효화됩니다.`
+    : null
   const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
   const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
   const needsTarget = Boolean(selectedDeclaration?.target)
@@ -174,7 +187,8 @@ export function useGameController(): GameControllerResult {
       ? `나의 ${displayedCard.ko} 선언`
       : `${displayedPlayerName} 님의 ${displayedCard.ko} 선언`
     : null
-  const statusText = attackResolutionStatus
+  const statusText = defenseResolutionStatus
+    ?? attackResolutionStatus
     ?? (errorMessage
     ? errorMessage
     : game?.status !== 'IN_GAME'

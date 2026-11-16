@@ -24,7 +24,7 @@ export function PlayCardActions({
           onClick={() => actions.setSelectedDeclarationId(selectedCard.id)}
           disabled={!eligibleDeclarations.some((card) => card.id === selectedCard.id)}
         >
-          {selectedCard.ko}로 선언
+          {selectedCard.id === 'clown' ? '광대로 선언 불가: 광대는 거짓말 불가' : `${selectedCard.ko}로 선언`}
         </ActionButton>
       </Choice>
       <Choice>

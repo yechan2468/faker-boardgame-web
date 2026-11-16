@@ -2,7 +2,7 @@ import { Client, type IMessage } from '@stomp/stompjs'
 import type { QueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, type Dispatch, type SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
-import type { AttackResolutionNotice } from './types'
+import type { AttackResolutionNotice, DefenseResolutionNotice } from './types'
 import type { DeclarationNotice } from './gameUi'
 
 type GameConnectionOptions = {
@@ -12,6 +12,7 @@ type GameConnectionOptions = {
   setHand: Dispatch<SetStateAction<string[]>>
   setDeclarationNotice: Dispatch<SetStateAction<DeclarationNotice | null>>
   setAttackResolutionNotice: Dispatch<SetStateAction<AttackResolutionNotice | null>>
+  setDefenseResolutionNotice: Dispatch<SetStateAction<DefenseResolutionNotice | null>>
 }
 
 export function useGameConnection({
@@ -21,6 +22,7 @@ export function useGameConnection({
   setHand,
   setDeclarationNotice,
   setAttackResolutionNotice,
+  setDefenseResolutionNotice,
 }: GameConnectionOptions) {
   const clientRef = useRef<Client | null>(null)
   useEffect(() => {
@@ -43,7 +45,9 @@ export function useGameConnection({
           if (payload.type === 'MATCH_STARTED') {
             setDeclarationNotice(null)
             setAttackResolutionNotice(null)
+            setDefenseResolutionNotice(null)
           }
+          if (payload.type === 'DEFENSE_SUBMITTED') setDefenseResolutionNotice(null)
           if (payload.type === 'BLUFF_SUBMITTED' && pendingAction) {
             setDeclarationNotice({
               playerId: pendingAction.actorId,
@@ -82,6 +86,23 @@ export function useGameConnection({
                 truthful: payload.truthful,
                 turnNumber: statePayload.turn.number,
               })
+              setDefenseResolutionNotice(null)
+            } else if (
+              typeof payload.defenseIndex === 'number'
+              && payload.defenseIndex >= 0
+              && typeof payload.actorId === 'string'
+              && typeof payload.challengedPlayerId === 'string'
+              && typeof payload.challengerId === 'string'
+              && typeof statePayload?.turn?.number === 'number'
+            ) {
+              setDefenseResolutionNotice({
+                actorId: payload.actorId,
+                defenderId: payload.challengedPlayerId,
+                challengerId: payload.challengerId,
+                truthful: payload.truthful,
+                turnNumber: statePayload.turn.number,
+              })
+              setAttackResolutionNotice(null)
             }
           }
 

@@ -9,6 +9,14 @@ export type AttackResolutionNotice = {
   turnNumber: number
 }
 
+export type DefenseResolutionNotice = {
+  actorId: string
+  defenderId: string
+  challengerId: string
+  truthful: boolean
+  turnNumber: number
+}
+
 export type GameScreenActions = {
   setModalOpen: Dispatch<SetStateAction<boolean>>
   setTurnIntro: Dispatch<SetStateAction<boolean>>
