@@ -6,6 +6,7 @@ public record GameStateView(
         GameStatus status,
         String viewerId,
         List<PlayerView> players,
+        List<String> turnOrder,
         List<LeaderboardEntry> leaderboard,
         int supplyHealth,
         int cardDeckCount,
@@ -15,11 +16,12 @@ public record GameStateView(
         PendingActionView pendingAction) {
     public GameStateView {
         players = List.copyOf(players);
+        turnOrder = List.copyOf(turnOrder);
         leaderboard = List.copyOf(leaderboard);
     }
 
-    public static GameStateView from(GameState state, List<LeaderboardEntry> sortedLeaderboard, String viewerId,
-            PendingActionView pendingAction) {
+    public static GameStateView from(GameState state, List<String> turnOrder,
+            List<LeaderboardEntry> sortedLeaderboard, String viewerId, PendingActionView pendingAction) {
         return new GameStateView(
                 state.status(),
                 viewerId,
@@ -27,6 +29,7 @@ public record GameStateView(
                         .map(player -> new PlayerView(player.id(), player.nickname(), player.role(), player.connected(),
                                 player.health(), player.health() > 0, player.cards().size()))
                         .toList(),
+                turnOrder,
                 sortedLeaderboard,
                 state.supplyHealth(),
                 state.cardDeck().size(),
@@ -41,7 +44,7 @@ public record GameStateView(
 
     public record PendingActionView(String actorId, String declaredCardId, String attackerActualCardId,
             List<String> targetIds, Boolean attackerTruthful, List<String> defensePasses, List<String> suspicionPasses,
-            List<DefenseView> defenses) {
+            Integer suspicionDefenseIndex, List<DefenseView> defenses) {
         public PendingActionView {
             targetIds = List.copyOf(targetIds);
             defensePasses = List.copyOf(defensePasses);

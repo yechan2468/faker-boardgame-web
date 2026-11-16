@@ -21,6 +21,19 @@ const CARD_INFO = [
   { id: 'clown', ko: '광대', en: 'Clown', target: false },
 ] as const
 
+type DeclarationNotice = {
+  playerId: string
+  declaredCardId: string
+  truthful: boolean | null
+}
+
+type AttackResolutionNotice = {
+  actorId: string
+  challengerId: string
+  truthful: boolean
+  turnNumber: number
+}
+
 const Page = styled.main`
   min-height: 100vh;
   padding: 1rem clamp(1rem, 3vw, 2.5rem) 1.5rem;
@@ -61,7 +74,7 @@ const MenuButton = styled.button`
 
 const Board = styled.section`
   display: grid;
-  grid-template-rows: minmax(6rem, 0.8fr) minmax(19rem, 2.7fr) minmax(9rem, 1fr) auto;
+  grid-template-rows: minmax(6rem, 0.8fr) minmax(19rem, 2.7fr) minmax(11rem, auto);
   gap: clamp(0.8rem, 2vh, 1.35rem);
   width: min(100%, 84rem);
   min-height: calc(100vh - 5rem);
@@ -140,9 +153,11 @@ const CenterContent = styled.div<{ $hidden: boolean }>`
 `
 
 const TableState = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(2rem, 7vw, 6rem);
+  gap: clamp(0.5rem, 2vw, 1.5rem);
+  width: min(100%, 52rem);
 `
 
 const Supply = styled.div`
@@ -164,42 +179,68 @@ const SupplyValue = styled.div`
 const Deck = styled.div`
   display: grid;
   justify-items: center;
-  gap: 0.45rem;
+  gap: 0.55rem;
   color: #c3d6ed;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
+  text-align: center;
 `
 
 const DeckCount = styled.div`
   color: #f6fbff;
-  font-size: 1.25rem;
-  font-weight: 800;
+  font-size: 2rem;
+  font-weight: 850;
+  line-height: 1;
 `
 
-const DeckStack = styled.div`
-  position: relative;
-  width: 4.4rem;
-  height: 5.7rem;
-  border: 1px solid #b2d1f0;
-  border-radius: 0.65rem;
-  background: linear-gradient(145deg, #407eb8, #1a3e68);
-  box-shadow: 0.25rem 0.25rem 0 #102846, 0.5rem 0.5rem 0 #081a30, 0 0.8rem 1.5rem rgb(0 0 0 / 25%);
-  &::after {
-    position: absolute;
-    inset: 0.4rem;
-    border: 1px solid rgb(222 238 255 / 48%);
-    border-radius: 0.4rem;
-    content: '';
-  }
-  &::before {
-    position: absolute;
-    z-index: 1;
-    inset: 1.75rem 0 0;
-    color: #e6f2ff;
-    content: 'FB';
-    font-size: 1.5rem;
-    font-weight: 900;
-    text-align: center;
-  }
+const DeclarationPanel = styled.div`
+  display: grid;
+  justify-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  width: 100%;
+  text-align: center;
+`
+
+const DeclarationText = styled.div`
+  color: #edf6ff;
+  font-size: clamp(0.92rem, 1.5vw, 1.2rem);
+  font-weight: 750;
+  line-height: 1.3;
+`
+
+const VerdictText = styled.div<{ $truthful: boolean }>`
+  color: ${({ $truthful }) => ($truthful ? '#8fe0a5' : '#ff9a9a')};
+  font-size: clamp(0.82rem, 1.3vw, 1.05rem);
+  font-weight: 800;
+  line-height: 1.3;
+`
+
+const DeclaredCard = styled.div<{ $truthful: boolean | null }>`
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.35rem;
+  width: clamp(6.3rem, 11vw, 8rem);
+  height: clamp(8.3rem, 17vh, 11rem);
+  padding: 0.6rem;
+  border: 2px solid ${({ $truthful }) => ($truthful === null ? '#b8d8f6' : $truthful ? '#8fe0a5' : '#ff9a9a')};
+  border-radius: 0.75rem;
+  color: #172b42;
+  background: linear-gradient(155deg, #f7f7ee, #cedbea);
+  box-shadow: 0 0.65rem 1.4rem rgb(0 0 0 / 35%);
+`
+
+const DeclaredCardName = styled.div`
+  color: #172b42;
+  font-size: clamp(1.2rem, 1.8vw, 1.55rem);
+  font-weight: 900;
+  line-height: 1.15;
+`
+
+const DeclaredCardEnglish = styled.div`
+  color: #61768d;
+  font-size: 0.72rem;
+  font-weight: 700;
 `
 
 const Status = styled.div`
@@ -238,7 +279,17 @@ const ActionChoices = styled.div`
   margin: auto;
 `
 
-const Choice = styled.div`
+const GameActionButtons = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+`
+
+const Choice = styled.div<{ $center?: boolean }>`
+  grid-column: ${({ $center }) => ($center ? '1 / -1' : 'auto')};
+  justify-self: ${({ $center }) => ($center ? 'center' : 'stretch')};
+  width: ${({ $center }) => ($center ? 'min(100%, 28rem)' : 'auto')};
   min-height: 4.3rem;
   padding: 0.65rem 0.8rem;
   border: 1px solid #45698e;
@@ -269,6 +320,7 @@ const Pill = styled.button<{ $selected?: boolean }>`
   background: ${({ $selected }) => ($selected ? '#285a8d' : '#172b43')};
   font-size: 0.75rem;
   cursor: pointer;
+  &:disabled { cursor: not-allowed; opacity: 0.42; }
 `
 
 const ActionButton = styled.button`
@@ -282,11 +334,13 @@ const ActionButton = styled.button`
   &:disabled { cursor: not-allowed; opacity: 0.42; }
 `
 
-const PlayerArea = styled.div`
-  display: flex;
-  align-items: flex-end;
-  justify-content: flex-start;
-  min-height: 5.3rem;
+const BottomArea = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: clamp(0.5rem, 2vw, 1.5rem);
+  width: 100%;
+  min-height: 11rem;
 `
 
 const OwnIdentity = styled.div`
@@ -299,12 +353,46 @@ const OwnName = styled(PlayerName)`
   font-size: 1.05rem;
 `
 
+const TurnOrderPreview = styled.div`
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: clamp(0.5rem, 1.5vw, 1.2rem);
+  min-width: 0;
+  width: 100%;
+  flex-wrap: wrap;
+`
+
+const TurnOrderItem = styled.div<{ $current: boolean }>`
+  display: grid;
+  justify-items: end;
+  gap: 0.1rem;
+  min-width: 0;
+`
+
+const TurnOrderLabel = styled.span`
+  color: #94b9df;
+  font-size: 0.62rem;
+  font-weight: 700;
+  white-space: nowrap;
+`
+
+const TurnOrderName = styled.div<{ $current: boolean }>`
+  max-width: 8rem;
+  overflow: hidden;
+  color: ${({ $current }) => ($current ? '#ffffff' : '#c6d9ef')};
+  font-size: ${({ $current }) => ($current ? '1.25rem' : '0.82rem')};
+  font-weight: ${({ $current }) => ($current ? 900 : 700)};
+  text-overflow: ellipsis;
+  white-space: nowrap;
+`
+
 const Hand = styled.div`
   display: flex;
   justify-content: center;
   align-items: flex-end;
   gap: clamp(0.45rem, 1.7vw, 1.1rem);
-  min-height: 10rem;
+  min-width: 0;
   padding: 0.6rem 0.5rem 0;
 `
 
@@ -382,12 +470,12 @@ const DialogActions = styled.div`
   margin-top: 1.3rem;
 `
 
-const SecondaryButton = styled.button`
-  border: 1px solid #526b89;
+const SecondaryButton = styled.button<{ $danger?: boolean }>`
+  border: 1px solid ${({ $danger }) => ($danger ? '#e07982' : '#526b89')};
   border-radius: 0.7rem;
   padding: 0.55rem 0.8rem;
-  color: #d8e6f7;
-  background: #1b3553;
+  color: ${({ $danger }) => ($danger ? '#fff0f0' : '#d8e6f7')};
+  background: ${({ $danger }) => ($danger ? '#71303b' : '#1b3553')};
   cursor: pointer;
   &:disabled { cursor: not-allowed; opacity: 0.5; }
 `
@@ -452,10 +540,13 @@ function GamePage() {
   const [redirectTargetId, setRedirectTargetId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [declarationNotice, setDeclarationNotice] = useState<DeclarationNotice | null>(null)
+  const [attackResolutionNotice, setAttackResolutionNotice] = useState<AttackResolutionNotice | null>(null)
   const [turnIntro, setTurnIntro] = useState(false)
-  const [startPending, setStartPending] = useState(false)
+  const [hostActionPending, setHostActionPending] = useState(false)
   const errorTimerRef = useRef<number | undefined>(undefined)
   const previousTurnRef = useRef<string | null>(null)
+  const previousGameStatusRef = useRef<string | null>(null)
   const clientRef = useRef<Client | null>(null)
   const game = gameQuery.data
   const pending = game?.pendingAction ?? null
@@ -480,8 +571,59 @@ function GamePage() {
           if (Array.isArray(payload.cards)) setHand(payload.cards as string[])
           if (typeof payload.message === 'string') showError(payload.message)
 
+          const statePayload = payload.state && typeof payload.state === 'object'
+            ? payload.state as Partial<GameState>
+            : null
+          const pendingAction = statePayload?.pendingAction
+            ?? (payload.pendingAction as GameState['pendingAction'] | undefined)
+            ?? null
+          if (payload.type === 'MATCH_STARTED') {
+            setDeclarationNotice(null)
+            setAttackResolutionNotice(null)
+          }
+          if (payload.type === 'BLUFF_SUBMITTED' && pendingAction) {
+            setDeclarationNotice({
+              playerId: pendingAction.actorId,
+              declaredCardId: pendingAction.declaredCardId,
+              truthful: pendingAction.attackerTruthful,
+            })
+          }
+          if (payload.type === 'DEFENSE_SUBMITTED' && pendingAction?.defenses.length) {
+            const defense = pendingAction.defenses[pendingAction.defenses.length - 1]
+            setDeclarationNotice({
+              playerId: defense.playerId,
+              declaredCardId: defense.declaredCardId,
+              truthful: defense.truthful,
+            })
+          }
+          if (typeof payload.truthful === 'boolean' && typeof payload.declaredCardId === 'string') {
+            const playerId = typeof payload.defenseIndex === 'number' && payload.defenseIndex >= 0
+              ? payload.challengedPlayerId
+              : payload.actorId
+            if (typeof playerId === 'string') {
+              setDeclarationNotice({
+                playerId,
+                declaredCardId: payload.declaredCardId,
+                truthful: payload.truthful,
+              })
+            }
+            if (
+              payload.defenseIndex === -1
+              && typeof payload.actorId === 'string'
+              && typeof payload.challengerId === 'string'
+              && typeof statePayload?.turn?.number === 'number'
+            ) {
+              setAttackResolutionNotice({
+                actorId: payload.actorId,
+                challengerId: payload.challengerId,
+                truthful: payload.truthful,
+                turnNumber: statePayload.turn.number,
+              })
+            }
+          }
+
           if (payload.state && typeof payload.state === 'object') {
-            const publicState = payload.state as Partial<GameState>
+            const publicState = statePayload as Partial<GameState>
             queryClient.setQueryData<GameState>(['game-state'], (current) =>
               current ? { ...current, ...publicState, viewerId: current.viewerId } : undefined,
             )
@@ -492,6 +634,9 @@ function GamePage() {
                     ...current,
                     status: payload.status as GameState['status'],
                     players: payload.players as PublicPlayer[],
+                    turnOrder: Array.isArray(payload.turnOrder)
+                      ? payload.turnOrder as string[]
+                      : current.turnOrder,
                     supplyHealth: payload.supplyHealth as number,
                     turn: payload.turn as GameState['turn'],
                     cardDeckCount: payload.deckCount as number,
@@ -502,10 +647,6 @@ function GamePage() {
             )
           }
 
-          if (typeof payload.truthful === 'boolean' && typeof payload.actualCardId === 'string') {
-            const cardName = getCard(payload.actualCardId).ko
-            showError(`${cardName} 선언은 ${payload.truthful ? '진실' : '거짓'}입니다.`)
-          }
         })
         client.subscribe('/user/queue/private', (message: IMessage) => {
           const payload = JSON.parse(message.body) as { cards?: string[] }
@@ -539,11 +680,30 @@ function GamePage() {
   }, [])
 
   useEffect(() => {
-    if (currentTurnId && currentTurnId === viewerId && previousTurnRef.current && previousTurnRef.current !== currentTurnId) {
+    if (gameStatus !== 'IN_GAME') setHand([])
+  }, [gameStatus])
+
+  useEffect(() => {
+    if (gameStatus === 'IN_GAME' && previousGameStatusRef.current === 'LOBBY') {
+      setDeclarationNotice(null)
+      setAttackResolutionNotice(null)
+    } else if (gameStatus === 'LOBBY' && !game?.matchResult) {
+      setDeclarationNotice(null)
+      setAttackResolutionNotice(null)
+    }
+    previousGameStatusRef.current = gameStatus ?? null
+  }, [gameStatus, game?.matchResult])
+
+  useEffect(() => {
+    if (gameStatus !== 'IN_GAME') {
+      previousTurnRef.current = null
+      return
+    }
+    if (currentTurnId && previousTurnRef.current !== currentTurnId) {
       setTurnIntro(true)
     }
     previousTurnRef.current = currentTurnId
-  }, [currentTurnId, viewerId])
+  }, [currentTurnId, gameStatus])
 
   useEffect(() => () => window.clearTimeout(errorTimerRef.current), [])
 
@@ -556,12 +716,59 @@ function GamePage() {
 
   const self = game?.players.find((player) => player.id === game.viewerId)
   const opponents = game?.players.filter((player) => player.id !== game.viewerId) ?? []
+  const aliveTurnOrder = game?.status === 'IN_GAME'
+    ? game.turnOrder
+      .map((playerId) => game.players.find((player) => player.id === playerId))
+      .filter((player): player is PublicPlayer => Boolean(player?.alive))
+    : []
+  const currentOrderIndex = aliveTurnOrder.findIndex((player) => player.id === game?.turn.activePlayerId)
+  const turnPreview = currentOrderIndex < 0
+    ? []
+    : [...aliveTurnOrder.slice(currentOrderIndex), ...aliveTurnOrder.slice(0, currentOrderIndex)].slice(0, 4)
   const isMyTurn = Boolean(game?.status === 'IN_GAME' && game.turn.activePlayerId === game.viewerId)
+  const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
+  const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
+  const attackResolutionStatus = attackResolutionNotice
+    && game?.status === 'IN_GAME'
+    && game.turn.phase === 'RESOLVED'
+    && game.turn.activePlayerId === attackResolutionNotice.actorId
+    && game.turn.number === attackResolutionNotice.turnNumber
+    ? attackResolutionNotice.truthful
+      ? `잘못 의심한 ${getPlayerName(game.players, attackResolutionNotice.challengerId)} 님이 체력 토큰을 2개 잃고, 선언한 카드의 능력이 그대로 적용됩니다.`
+      : `거짓이 발각되어 ${getPlayerName(game.players, attackResolutionNotice.actorId)} 님의 체력 토큰을 2개 잃고, 선언한 카드의 능력이 무효화됩니다.`
+    : null
   const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
   const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
   const needsTarget = Boolean(selectedDeclaration?.target)
   const eligibleDeclarations = CARD_INFO.filter((card) => !['wizard', 'defender', 'clown'].includes(card.id))
-  const statusText = errorMessage
+  const activeDefenseDeclaration = game?.turn.phase === 'DEFENSE_SUSPICION'
+    ? pending?.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)
+    : null
+  const pendingDeclarationNotice: DeclarationNotice | null = activeDefenseDeclaration
+    ? {
+        playerId: activeDefenseDeclaration.playerId,
+        declaredCardId: activeDefenseDeclaration.declaredCardId,
+        truthful: activeDefenseDeclaration.truthful,
+      }
+    : pending
+      ? {
+          playerId: pending.actorId,
+          declaredCardId: pending.declaredCardId,
+          truthful: pending.attackerTruthful,
+        }
+      : null
+  const displayedDeclaration = declarationNotice ?? pendingDeclarationNotice
+  const displayedCard = displayedDeclaration ? getCard(displayedDeclaration.declaredCardId) : null
+  const displayedPlayerName = displayedDeclaration
+    ? getPlayerName(game?.players ?? [], displayedDeclaration.playerId)
+    : null
+  const displayedDeclarationLabel = displayedDeclaration && displayedCard
+    ? displayedDeclaration.playerId === viewerId
+      ? `나의 ${displayedCard.ko} 선언`
+      : `${displayedPlayerName} 님의 ${displayedCard.ko} 선언`
+    : null
+  const statusText = attackResolutionStatus
+    ?? (errorMessage
     ? errorMessage
     : game?.status !== 'IN_GAME'
       ? game?.matchResult?.message ?? '호스트가 게임을 시작하기를 기다리는 중입니다.'
@@ -569,9 +776,11 @@ function GamePage() {
         ? '공격 대상들이 방어를 선택하는 중입니다.'
         : game.turn.phase === 'SUSPICION'
           ? '의심을 진행 중입니다.'
-          : isMyTurn
+            : game.turn.phase === 'DEFENSE_SUSPICION'
+              ? '방어 선언을 의심하는 중입니다.'
+              : isMyTurn
             ? '나의 턴입니다'
-            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중...`
+            : `${game.players.find((player) => player.id === game.turn.activePlayerId)?.nickname ?? '상대'} 님이 턴 진행 중...`)
 
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
@@ -589,23 +798,58 @@ function GamePage() {
     clientRef.current.publish({ destination, body: JSON.stringify(body) })
   }
 
-  const startGame = () => {
-    if (!game || self?.role !== 'HOST' || game.players.length < 2) return
-    setStartPending(true)
+  const sendHostAction = (destination: string, failureMessage: string) => {
+    if (!game || self?.role !== 'HOST' || hostActionPending) return
+    setHostActionPending(true)
+    if (clientRef.current?.connected) {
+      clientRef.current.publish({ destination, body: '{}' })
+      window.setTimeout(() => setHostActionPending(false), 1200)
+      return
+    }
+
     const client = new Client({
       brokerURL: `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws`,
       reconnectDelay: 0,
       onConnect: () => {
-        client.publish({ destination: '/app/game/start', body: '{}' })
-        window.setTimeout(() => void client.deactivate(), 300)
-        window.setTimeout(() => setStartPending(false), 1800)
+        client.subscribe('/user/queue/errors', (message: IMessage) => {
+          const payload = JSON.parse(message.body) as { message?: string }
+          showError(payload.message || failureMessage)
+          setHostActionPending(false)
+          void client.deactivate()
+        })
+        client.publish({ destination, body: '{}' })
+        window.setTimeout(() => {
+          setHostActionPending(false)
+          void client.deactivate()
+        }, 1200)
       },
       onStompError: (frame) => {
-        showError(frame.headers.message || '게임을 시작하지 못했습니다.')
-        setStartPending(false)
+        showError(frame.headers.message || failureMessage)
+        setHostActionPending(false)
+        void client.deactivate()
+      },
+      onWebSocketError: () => {
+        showError(failureMessage)
+        setHostActionPending(false)
+        void client.deactivate()
       },
     })
     client.activate()
+  }
+
+  const startGame = () => sendHostAction('/app/game/start', '게임을 시작하지 못했습니다.')
+  const restartGame = () => {
+    if (!game) return
+    if (game.players.length < 2) {
+      showError('게임을 재시작하려면 플레이어가 2명 이상 필요합니다.')
+      return
+    }
+    setModalOpen(false)
+    sendHostAction('/app/game/restart', '게임을 재시작하지 못했습니다.')
+  }
+  const endGame = () => {
+    setModalOpen(false)
+    sendHostAction('/app/game/end', '게임을 종료하지 못했습니다.')
   }
 
   const submitBluff = () => {
@@ -654,7 +898,23 @@ function GamePage() {
     pending && pending.targetIds.includes(game.viewerId ?? '') &&
     !pending.defensePasses.includes(game.viewerId ?? ''),
   )
+  const hasDefenderCard = hand.includes('defender')
+  const hasWizardCard = hand.includes('wizard')
+  const redirectTargets = opponents.filter((player) => player.alive && !pending?.targetIds.includes(player.id))
   const hasPassedSuspicion = Boolean(pending?.suspicionPasses.includes(game?.viewerId ?? ''))
+  const suspicionPlayers = game?.players ?? []
+  const suspicionCardOwnerId = game?.turn.phase === 'SUSPICION'
+    ? pending?.actorId
+    : game?.turn.phase === 'DEFENSE_SUSPICION'
+      ? pending?.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)?.playerId
+      : undefined
+  const suspicionPasserNames = (pending?.suspicionPasses ?? [])
+    .map((playerId) => getPlayerName(suspicionPlayers, playerId))
+  const suspicionWaitingNames = suspicionPlayers
+    .filter((player) => player.alive && player.id !== suspicionCardOwnerId
+      && !pending?.suspicionPasses.includes(player.id))
+    .map((player) => player.nickname)
+    .join(', ')
 
   if (gameQuery.isLoading) {
     return <Page><TopBar><Brand>Faker Blue</Brand></TopBar><Status>게임 상태를 불러오는 중...</Status></Page>
@@ -677,18 +937,13 @@ function GamePage() {
               key={player.id}
               type="button"
               $active={game.turn.activePlayerId === player.id}
-              $selected={targetId === player.id || redirectTargetId === player.id}
+              $selected={targetId === player.id}
               $alive={player.alive}
-              disabled={Boolean(
-                mustDefend && selectedDefenseType === 'wizard' &&
-                (!player.alive || pending?.targetIds.includes(player.id)),
-              )}
+              disabled={mustDefend || !player.alive}
               onClick={() => {
-                if (mustDefend && selectedDefenseType === 'wizard' && player.alive
-                  && !pending?.targetIds.includes(player.id)) setRedirectTargetId(player.id)
-                else if (isMyTurn && needsTarget) setTargetId(player.id)
+                if (isMyTurn && needsTarget && player.alive) setTargetId(player.id)
               }}
-              aria-pressed={targetId === player.id || redirectTargetId === player.id}
+              aria-pressed={targetId === player.id}
             >
               <PlayerName>{player.nickname}</PlayerName>
               <PlayerHealth $small>
@@ -708,23 +963,53 @@ function GamePage() {
                 <span>남은 체력 토큰</span>
                 <SupplyValue>{game.supplyHealth}</SupplyValue>
               </Supply>
+              <DeclarationPanel>
+                <DeclarationText>
+                  {displayedDeclarationLabel
+                    ? displayedDeclarationLabel
+                    : '아직 카드 선언이 없습니다.'}
+                </DeclarationText>
+                {displayedDeclaration && displayedCard && displayedDeclaration.truthful !== null && (
+                  <VerdictText $truthful={displayedDeclaration.truthful}>
+                    {displayedDeclarationLabel}은 {displayedDeclaration.truthful ? '진실' : '거짓'}이었습니다.
+                  </VerdictText>
+                )}
+                <DeclaredCard $truthful={displayedDeclaration?.truthful ?? null}>
+                  <DeclaredCardName>{displayedCard?.ko ?? '선언 대기'}</DeclaredCardName>
+                  <DeclaredCardEnglish>{displayedCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
+                </DeclaredCard>
+              </DeclarationPanel>
               <Deck>
+                <span>남은 카드</span>
                 <DeckCount>{game.cardDeckCount}</DeckCount>
-                <DeckStack aria-label="기본 카드 더미" />
-                <span>기본 카드 더미</span>
               </Deck>
             </TableState>
             <Status data-error={Boolean(errorMessage)}>{statusText}</Status>
             {game.status === 'LOBBY' && self?.role === 'HOST' && (
-              <ActionButton type="button" onClick={startGame} disabled={startPending || game.players.length < 2}>
-                {startPending ? '시작 요청 중...' : '게임 시작'}
-              </ActionButton>
+              game.matchResult ? (
+                <GameActionButtons>
+                  <ActionButton type="button" onClick={restartGame} disabled={hostActionPending || game.players.length < 2}>
+                    {hostActionPending ? '재시작 중...' : '게임 재시작'}
+                  </ActionButton>
+                  <SecondaryButton type="button" $danger onClick={endGame} disabled={hostActionPending}>
+                    게임 종료
+                  </SecondaryButton>
+                </GameActionButtons>
+              ) : (
+                <ActionButton type="button" onClick={startGame} disabled={hostActionPending || game.players.length < 2}>
+                  {hostActionPending ? '시작 중...' : '게임 시작'}
+                </ActionButton>
+              )
             )}
             {game.status === 'IN_GAME' && isMyTurn && game.turn.phase === 'RESOLVED' && (
               <ActionButton type="button" onClick={submitTurnEnd}>턴 종료</ActionButton>
             )}
           </CenterContent>
-          {turnIntro && <TurnOverlay onAnimationEnd={() => setTurnIntro(false)}>나의 턴</TurnOverlay>}
+          {turnIntro && (
+            <TurnOverlay key={currentTurnId} onAnimationEnd={() => setTurnIntro(false)}>
+              {turnOverlayText}
+            </TurnOverlay>
+          )}
 
           {canAct && selectedCard && (
             <ActionChoices>
@@ -800,28 +1085,9 @@ function GamePage() {
             </ActionChoices>
           )}
 
-          {pending && game.turn.phase === 'SUSPICION' && self?.alive && (
+          {pending && (game.turn.phase === 'SUSPICION' || game.turn.phase === 'DEFENSE_SUSPICION') && self?.alive && (
             <ActionChoices>
-              <Choice>
-                <ChoiceTitle>
-                  {getPlayerName(game.players, pending.actorId)}의 {getCard(pending.declaredCardId).ko} 선언
-                </ChoiceTitle>
-                {pending.attackerTruthful === null ? (
-                  game.viewerId !== pending.actorId && (
-                    <ActionButton
-                      type="button"
-                      onClick={() => publish('/app/game/bluff/challenge', { challengedPlayerId: pending.actorId })}
-                    >
-                      공격 선언 의심하기
-                    </ActionButton>
-                  )
-                ) : (
-                  <ChoiceTitle>
-                    {pending.attackerTruthful ? '진실' : '거짓'} · 실제 카드: {getCard(pending.attackerActualCardId ?? '').ko}
-                  </ChoiceTitle>
-                )}
-              </Choice>
-              {pending.defenses.map((defense) => (
+              {game.turn.phase === 'DEFENSE_SUSPICION' && pending.defenses.filter((defense) => defense.index === pending.suspicionDefenseIndex).map((defense) => (
                 <Choice key={defense.index}>
                   <ChoiceTitle>
                     {getPlayerName(game.players, defense.playerId)}의 {getCard(defense.declaredCardId).ko} 방어
@@ -845,40 +1111,93 @@ function GamePage() {
                   )}
                 </Choice>
               ))}
-              <Choice>
+              <Choice $center>
                 <ChoiceTitle>
-                  의심을 끝내려면 생존 플레이어 모두가 패스해야 합니다. ({pending.suspicionPasses.length}/{game.players.filter((player) => player.alive).length})
+                  {suspicionPasserNames.length > 0
+                    ? `${suspicionPasserNames.join(', ')} 님이 패스하였습니다. `
+                    : '아직 패스한 플레이어가 없습니다. '}
+                  {suspicionWaitingNames.length > 0
+                    ? `${suspicionWaitingNames} 님의 선택 대기 중...`
+                    : '모두 선택했습니다.'}
                 </ChoiceTitle>
-                <ActionButton type="button" onClick={passSuspicion} disabled={hasPassedSuspicion}>
-                  {hasPassedSuspicion ? '패스 완료 · 다른 플레이어 대기 중' : '더 의심하지 않기'}
-                </ActionButton>
+                {game.turn.phase === 'SUSPICION'
+                  && pending.attackerTruthful === null
+                  && game.viewerId !== pending.actorId && (
+                    <ActionButton
+                      type="button"
+                      onClick={() => publish('/app/game/bluff/challenge', { challengedPlayerId: pending.actorId })}
+                    >
+                      의심하기
+                    </ActionButton>
+                  )}
+                {game.viewerId !== suspicionCardOwnerId && (
+                  <ActionButton type="button" onClick={passSuspicion} disabled={hasPassedSuspicion}>
+                    {hasPassedSuspicion ? '패스 완료 · 다른 플레이어 대기 중' : '패스하기'}
+                  </ActionButton>
+                )}
               </Choice>
             </ActionChoices>
           )}
 
           {mustDefend && (
             <ActionChoices>
-              <Choice>
-                <ChoiceTitle>방어 카드로 선언</ChoiceTitle>
-                {hand.length > 0 && (
-                  <Pills>
-                    <Pill type="button" $selected={selectedDefenseType === 'defender'} onClick={() => setSelectedDefenseType('defender')}>방패병</Pill>
-                    <Pill type="button" $selected={selectedDefenseType === 'wizard'} onClick={() => setSelectedDefenseType('wizard')}>마법사</Pill>
-                  </Pills>
+              <Choice $center>
+                <ChoiceTitle>방어 카드 선언</ChoiceTitle>
+                <Pills>
+                  <Pill
+                    type="button"
+                    $selected={selectedDefenseType === 'defender'}
+                    disabled={!hasDefenderCard}
+                    onClick={() => {
+                      setSelectedDefenseType('defender')
+                      setRedirectTargetId(null)
+                    }}
+                  >
+                    방패병
+                  </Pill>
+                  <Pill
+                    type="button"
+                    $selected={selectedDefenseType === 'wizard'}
+                    disabled={!hasWizardCard}
+                    onClick={() => {
+                      setSelectedDefenseType('wizard')
+                      setRedirectTargetId(null)
+                    }}
+                  >
+                    마법사
+                  </Pill>
+                </Pills>
+                {selectedDefenseType === 'wizard' && (
+                  <>
+                    <ChoiceTitle>반사 대상을 선택하세요.</ChoiceTitle>
+                    <Pills>
+                      {redirectTargets.map((player) => (
+                        <Pill
+                          key={player.id}
+                          type="button"
+                          $selected={redirectTargetId === player.id}
+                          disabled={!hasWizardCard}
+                          onClick={() => setRedirectTargetId(player.id)}
+                          aria-pressed={redirectTargetId === player.id}
+                        >
+                          {player.nickname}
+                        </Pill>
+                      ))}
+                    </Pills>
+                  </>
                 )}
-                {selectedDefenseType === 'wizard' && <ChoiceTitle>상대 플레이어를 눌러 반사 대상을 선택하세요.</ChoiceTitle>}
-                <ActionButton type="button" onClick={submitDefense} disabled={!selectedDefenseType || selectedHandIndex === null || (selectedDefenseType === 'wizard' && !redirectTargetId)}>
+                <ActionButton type="button" onClick={submitDefense} disabled={!selectedDefenseType || !hand.includes(selectedDefenseType) || selectedHandIndex === null || (selectedDefenseType === 'wizard' && !redirectTargetId)}>
                   선택한 카드로 방어
                 </ActionButton>
-                <SecondaryButton type="button" onClick={passDefense}>
-                  방어하지 않기
+                <SecondaryButton type="button" $danger={!hasDefenderCard && !hasWizardCard} onClick={passDefense}>
+                  {!hasDefenderCard && !hasWizardCard ? '방어 불가능' : '방어하지 않기'}
                 </SecondaryButton>
               </Choice>
             </ActionChoices>
           )}
         </PlayField>
 
-        <PlayerArea>
+        <BottomArea>
           <OwnIdentity>
             <OwnName>{self?.nickname ?? '나'}</OwnName>
             <PlayerHealth>
@@ -886,22 +1205,31 @@ function GamePage() {
               <Hearts>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
             </PlayerHealth>
           </OwnIdentity>
-        </PlayerArea>
-
-        <Hand aria-label="내 카드 패">
-          {hand.map((cardId, index) => {
-            const card = getCard(cardId)
-            const cardOccurrence = hand.slice(0, index).filter((id) => id === cardId).length
-            return (
-              <GameCard key={`${cardId}-${cardOccurrence}`} type="button" $selected={selectedHandIndex === index}
-                onClick={() => setSelectedHandIndex(selectedHandIndex === index ? null : index)}
-                aria-pressed={selectedHandIndex === index} draggable={false}>
-                <CardKorean>{card.ko}</CardKorean>
-                <CardEnglish>{card.en}</CardEnglish>
-              </GameCard>
-            )
-          })}
-        </Hand>
+          <Hand aria-label="내 카드 패">
+            {hand.map((cardId, index) => {
+              const card = getCard(cardId)
+              const cardOccurrence = hand.slice(0, index).filter((id) => id === cardId).length
+              return (
+                <GameCard key={`${cardId}-${cardOccurrence}`} type="button" $selected={selectedHandIndex === index}
+                  onClick={() => setSelectedHandIndex(selectedHandIndex === index ? null : index)}
+                  aria-pressed={selectedHandIndex === index} draggable={false}>
+                  <CardKorean>{card.ko}</CardKorean>
+                  <CardEnglish>{card.en}</CardEnglish>
+                </GameCard>
+              )
+            })}
+          </Hand>
+          <TurnOrderPreview aria-label="턴 순서">
+            {turnPreview.map((player, index) => (
+              <TurnOrderItem key={player.id} $current={index === 0}>
+                <TurnOrderLabel>
+                  {index === 0 ? '현재 순서' : index === 1 ? '다음 순서' : `${index}번째 다음`}
+                </TurnOrderLabel>
+                <TurnOrderName $current={index === 0}>{player.nickname}</TurnOrderName>
+              </TurnOrderItem>
+            ))}
+          </TurnOrderPreview>
+        </BottomArea>
       </Board>
 
       {modalOpen && (
@@ -921,8 +1249,21 @@ function GamePage() {
               </LeaderRow>
             ))}
             <DialogActions>
-              <SecondaryButton type="button" disabled title="추후 연결 예정">게임 재시작</SecondaryButton>
-              <SecondaryButton type="button" disabled title="추후 연결 예정">게임 종료</SecondaryButton>
+              <SecondaryButton
+                type="button"
+                onClick={restartGame}
+                disabled={self?.role !== 'HOST' || hostActionPending || game.players.length < 2}
+              >
+                게임 재시작
+              </SecondaryButton>
+              <SecondaryButton
+                type="button"
+                $danger
+                onClick={endGame}
+                disabled={self?.role !== 'HOST' || hostActionPending}
+              >
+                게임 종료
+              </SecondaryButton>
             </DialogActions>
           </Dialog>
         </DialogBackdrop>

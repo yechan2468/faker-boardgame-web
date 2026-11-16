@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.stereotype.Service;
 import org.springframework.context.ApplicationEventPublisher;
 import com.yechan.fakerblue.model.game.PlayerSessionChangedEvent;
@@ -56,6 +57,13 @@ public class GameSessionService {
 
     public synchronized boolean isActivePlayer(String playerId) {
         return activeSessions.values().stream().anyMatch(session -> session.principal().getId().equals(playerId));
+    }
+
+    public synchronized Optional<GamePrincipal> findActivePrincipal(String playerId) {
+        return activeSessions.values().stream()
+                .map(ActiveSession::principal)
+                .filter(principal -> principal.getId().equals(playerId))
+                .findFirst();
     }
 
     public void sessionDestroyed(String sessionId) {

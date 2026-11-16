@@ -5,6 +5,7 @@ import java.util.List;
 public record GameEvent(
         String type,
         List<GameStateView.PlayerView> players,
+        List<String> turnOrder,
         int supplyHealth,
         TurnState turn,
         int deckCount,
@@ -13,10 +14,11 @@ public record GameEvent(
         GameStateView.PendingActionView pendingAction) {
     public GameEvent {
         players = List.copyOf(players);
+        turnOrder = List.copyOf(turnOrder);
     }
 
     public static GameEvent from(String type, GameStateView state) {
-        return new GameEvent(type, state.players(), state.supplyHealth(), state.turn(), state.cardDeckCount(),
+        return new GameEvent(type, state.players(), state.turnOrder(), state.supplyHealth(), state.turn(), state.cardDeckCount(),
                 state.status(), state.matchResult(), state.pendingAction());
     }
 }

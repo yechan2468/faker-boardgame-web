@@ -44,6 +44,7 @@ export interface GameState {
   status: GameStatus
   viewerId: string | null
   players: PublicPlayer[]
+  turnOrder: string[]
   leaderboard: LeaderboardEntry[]
   supplyHealth: number
   cardDeckCount: number
@@ -61,6 +62,7 @@ export interface PendingAction {
   attackerTruthful: boolean | null
   defensePasses: string[]
   suspicionPasses: string[]
+  suspicionDefenseIndex: number | null
   defenses: Array<{
     index: number
     playerId: string
@@ -74,6 +76,7 @@ export interface PendingAction {
 export interface GameEvent {
   type: string
   players: PublicPlayer[]
+  turnOrder: string[]
   supplyHealth: number
   turn: { number: number; activePlayerId: string | null; phase: string }
   deckCount: number
