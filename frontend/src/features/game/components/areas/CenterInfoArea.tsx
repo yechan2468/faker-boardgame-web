@@ -19,6 +19,7 @@ import {
   SecondaryButton,
   Status,
   Supply,
+  SupplyChest,
   SupplyValue,
   TableState,
   VerdictText,
@@ -27,6 +28,7 @@ import { CardMascot } from '../cards/CardMascot'
 import { getCard, getCardEffectIcons, type DeclarationNotice } from '../../gameUi'
 import { useGameAudio } from '../../audio/GameAudioProvider'
 import cardBackImage from '../../../../assets/image/card-back.jpg'
+import chestImage from '../../../../assets/image/chest.png'
 
 export function CenterInfoArea({
   game,
@@ -47,6 +49,34 @@ export function CenterInfoArea({
   const [visibleCardId, setVisibleCardId] = useState(displayedCard?.id ?? null)
   const [flipPhase, setFlipPhase] = useState<'hide' | 'reveal' | 'wobble' | null>(null)
   const previousDeclaration = useRef<DeclarationNotice | null>(null)
+
+  useLayoutEffect(() => {
+    const updateChestAlignment = () => {
+      const supplyLabel = document.querySelector<HTMLElement>('[data-health-supply-label]')
+      const chest = document.querySelector<HTMLElement>('[data-supply-chest]')
+      if (!supplyLabel || !chest || chest.offsetWidth === 0) return
+
+      const labelRect = supplyLabel.getBoundingClientRect()
+      const chestRect = chest.getBoundingClientRect()
+      const screenDelta = labelRect.left + labelRect.width / 2 - (chestRect.left + chestRect.width / 2)
+      const horizontalScale = chestRect.width / chest.offsetWidth
+      if (Math.abs(screenDelta) < 0.25 || horizontalScale === 0) return
+      const currentAdjustment = Number.parseFloat(chest.style.getPropertyValue('--chest-x-adjust')) || 0
+      chest.style.setProperty('--chest-x-adjust', `${currentAdjustment + screenDelta / horizontalScale}px`)
+    }
+
+    updateChestAlignment()
+    const supplyLabel = document.querySelector<HTMLElement>('[data-health-supply-label]')
+    const table = document.querySelector<HTMLElement>('[data-card-dropzone="center"]')
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateChestAlignment)
+    if (supplyLabel) observer?.observe(supplyLabel)
+    if (table) observer?.observe(table)
+    window.addEventListener('resize', updateChestAlignment)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', updateChestAlignment)
+    }
+  }, [game.cardDeckCount])
 
   useLayoutEffect(() => {
     const previous = previousDeclaration.current
@@ -113,10 +143,10 @@ export function CenterInfoArea({
   return (
     <>
       {game.matchResult && game.status === 'LOBBY' && <ResultBanner>{game.matchResult.message}</ResultBanner>}
-      <CenterContent $hidden={turnIntro}>
+      <CenterContent $hidden={turnIntro} data-center-content="true">
         <TableState>
           <Supply>
-            <span>남은 체력 토큰</span>
+            <span data-health-supply-label="true">남은 체력 토큰</span>
             <SupplyValue data-health-supply="true">{game.supplyHealth}</SupplyValue>
           </Supply>
           <DeclarationPanel>
@@ -187,6 +217,7 @@ export function CenterInfoArea({
           <ActionButton type="button" onClick={actions.submitTurnEnd}>턴 종료</ActionButton>
         )}
       </CenterContent>
+      <SupplyChest data-supply-chest="true" src={chestImage} alt="" aria-hidden="true" draggable={false} />
 
     </>
   )

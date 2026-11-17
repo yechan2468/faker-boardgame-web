@@ -91,13 +91,22 @@ export const Board = styled.section`
   }
 `
 
-export const OpponentRow = styled.div`
+export const OpponentRow = styled.div<{ $spread?: boolean }>`
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: ${({ $spread }) => ($spread ? 'space-between' : 'center')};
   gap: clamp(0.4rem, 1.2vw, 1rem);
   flex-wrap: wrap;
+  width: 100%;
   min-width: 0;
+`
+export const OpponentSeat = styled.div`
+  position: relative;
+  z-index: 7;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  width: 9rem;
 `
 
 export const OpponentCard = styled.button<{ $active: boolean; $selected: boolean; $alive: boolean }>`
@@ -153,6 +162,7 @@ const tableGlowDrift = keyframes`
 `
 
 export const PlayField = styled.div`
+  --table-counter-tilt: -26deg;
   position: relative;
   display: grid;
   place-items: center;
@@ -182,6 +192,7 @@ export const PlayField = styled.div`
     animation: ${tableGlowDrift} 42s ease-in-out infinite alternate;
   }
   @media (max-width: 760px) {
+    --table-counter-tilt: -18deg;
     width: 100%;
     min-height: 22rem;
     transform: perspective(1100px) rotateX(18deg);
@@ -226,6 +237,7 @@ export const TableState = styled.div`
 export const Supply = styled.div`
   display: grid;
   justify-items: center;
+  align-self: start;
   gap: 0.55rem;
   color: #fff;
   font-size: 0.78rem;
@@ -239,9 +251,29 @@ export const SupplyValue = styled.div`
   line-height: 1;
   text-shadow: 0 2px 0 #2b1d14;
 `
+export const SupplyChest = styled.img`
+  position: absolute;
+  z-index: 20;
+  left: calc(50% - min(27.733rem, 43.333%) + var(--chest-x-adjust, 0px));
+  top: calc(50% + 1rem);
+  width: clamp(12.48rem, 14.3vw, 15.6rem);
+  height: clamp(16.12rem, 20.8vh, 20.28rem);
+  object-fit: contain;
+  filter: brightness(0.7) saturate(0.56) drop-shadow(0 5px 8px rgb(0 0 0 / 34%));
+  transform: translate(-50%, -50%) rotateX(var(--table-counter-tilt)) translateZ(6rem);
+  transform-origin: center;
+  pointer-events: none;
+  @media (max-width: 1360px) {
+    left: calc(50% - min(23.04rem, 36%) + var(--chest-x-adjust, 0px));
+  }
+  @media (max-width: 1100px) {
+    left: calc(50% - min(21.333rem, 33.333%) + var(--chest-x-adjust, 0px));
+  }
+`
 export const Deck = styled.div`
   display: grid;
   justify-items: center;
+  align-self: start;
   gap: 0.55rem;
   color: #fff;
   font-size: 0.78rem;
@@ -667,12 +699,18 @@ export const TruthfulDeclarationButton = styled(ActionButton).attrs({ 'data-game
     : 'linear-gradient(180deg, #fffaf0, #f4e9d5)')}; }
 `
 export const BottomArea = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: end;
-  gap: clamp(0.5rem, 2vw, 1.5rem);
-  width: 100%;
-  min-height: 15.6rem;
+  position: fixed;
+  z-index: 6;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  width: 100vw;
+  height: clamp(15.6rem, 28vh, 19rem);
+  padding-bottom: 0.6rem;
+  pointer-events: none;
 `
 
 export const OwnIdentity = styled.div`
@@ -688,19 +726,119 @@ export const OwnIdentity = styled.div`
   background: linear-gradient(155deg, #5b3e28, #3c291b);
   box-shadow: 0 2px 0 #2b1d14;
 `
+export const OwnPlayerSeat = styled.div`
+  position: fixed;
+  z-index: 6;
+  left: clamp(1rem, 3vw, 2.5rem);
+  bottom: 1rem;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  justify-self: start;
+  width: min(9rem, 100%);
+  min-width: 0;
+`
 export const OwnName = styled(PlayerName)`
   width: 100%;
   max-width: 100%;
   font-size: 1.05rem;
 `
+export const PlayerCardFanLayout = styled.div<{ $opponent?: boolean; $left?: number; $top?: number; $width?: number }>`
+  position: ${({ $opponent }) => ($opponent ? 'fixed' : 'relative')};
+  display: ${({ $opponent }) => ($opponent ? 'block' : 'flex')};
+  justify-content: center;
+  align-items: flex-start;
+  left: ${({ $left, $opponent }) => ($opponent && $left !== undefined ? `${$left}px` : 'auto')};
+  top: ${({ $top, $opponent }) => ($opponent && $top !== undefined ? `${$top}px` : 'auto')};
+  width: ${({ $width, $opponent }) => ($opponent && $width !== undefined ? `${$width}px` : '100%')};
+  height: ${({ $opponent }) => ($opponent ? 'clamp(5.2rem, 6.4vw, 6.2rem)' : 'clamp(2.6rem, 4vh, 3.1rem)')};
+  margin-top: ${({ $opponent }) => ($opponent ? 0 : '-0.05rem')};
+  ${({ $opponent }) => $opponent && css`
+    z-index: 6;
+    transform: translateY(-50%);
+  `}
+  pointer-events: none;
+`
+export const PlayerShadowShape = styled.div<{ $left: number; $top: number; $height: number }>`
+  position: fixed;
+  z-index: 5;
+  left: ${({ $left }) => `${$left}px`};
+  top: ${({ $top }) => `${$top}px`};
+  width: clamp(5rem, 8vw, 8rem);
+  height: ${({ $height }) => `${$height}px`};
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse 62% 45% at 50% 68%, rgb(0 0 0 / 50%), transparent 78%);
+  filter: blur(14px);
+  opacity: 0.52;
+  pointer-events: none;
+  &::before {
+    content: '';
+    position: absolute;
+    left: 34%;
+    top: 2%;
+    width: 32%;
+    height: 15%;
+    border-radius: 50%;
+    background: rgb(0 0 0 / 76%);
+    filter: blur(9px);
+  }
+  &::after {
+    content: '';
+    position: absolute;
+    left: 12%;
+    top: 14%;
+    width: 76%;
+    height: 84%;
+    border-radius: 43% 43% 50% 50% / 20% 20% 60% 60%;
+    background: radial-gradient(ellipse at 50% 38%, rgb(0 0 0 / 78%), rgb(0 0 0 / 48%) 72%);
+    filter: blur(12px);
+  }
+`
+export const PlayerCardBack = styled.img<{ $index: number; $count: number; $opponent?: boolean }>`
+  position: ${({ $opponent }) => ($opponent ? 'absolute' : 'relative')};
+  top: ${({ $opponent, $index, $count }) => {
+    if (!$opponent) return 'auto'
+    const distanceFromCenter = $index - (($count - 1) / 2)
+    return `${Math.abs(distanceFromCenter) * 0.14}rem`
+  }};
+  left: ${({ $opponent, $index, $count }) => {
+    if (!$opponent) return 'auto'
+    return $count === 1 ? '50%' : `${($index / ($count - 1)) * 100}%`
+  }};
+  flex: 0 0 auto;
+  z-index: ${({ $index }) => $index};
+  width: ${({ $opponent }) => ($opponent ? 'clamp(3.8rem, 4.5vw, 4.6rem)' : 'clamp(1.9rem, 2.25vw, 2.3rem)')};
+  height: ${({ $opponent }) => ($opponent ? 'clamp(5.2rem, 6.4vw, 6.2rem)' : 'clamp(2.6rem, 3.2vh, 3.1rem)')};
+  margin-left: ${({ $opponent, $index }) => ($opponent || $index === 0 ? 0 : '-1.1rem')};
+  border: 1px solid #392719;
+  border-radius: 0.28rem;
+  box-shadow: 0 2px 3px rgb(0 0 0 / 38%);
+  object-fit: cover;
+  filter: ${({ $opponent }) => ($opponent ? 'brightness(0.7) drop-shadow(0 3px 5px rgb(0 0 0 / 42%))' : 'none')};
+  transform: ${({ $index, $count, $opponent }) => {
+    const distanceFromCenter = $index - (($count - 1) / 2)
+    const horizontalAnchor = $count === 1 || ($index > 0 && $index < $count - 1)
+      ? '-50%'
+      : $index === 0 ? '0%' : '-100%'
+    const positionX = $opponent ? `translateX(${horizontalAnchor}) ` : ''
+    return `${positionX}translateY(${Math.abs(distanceFromCenter) * 0.14}rem) rotate(${distanceFromCenter * 9}deg)`
+  }};
+  transform-origin: center bottom;
+`
 
 export const TurnOrderPreview = styled.div`
+  position: fixed;
+  z-index: 6;
+  right: clamp(1rem, 3vw, 2.5rem);
+  bottom: 1rem;
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
   gap: clamp(0.7rem, 1.8vw, 1.4rem);
   min-width: 0;
-  width: 100%;
+  width: max-content;
+  max-width: min(65vw, 48rem);
   flex-wrap: wrap;
   @media (max-width: 900px) {
     gap: 0.35rem;
@@ -738,8 +876,11 @@ export const Hand = styled.div`
   justify-content: center;
   align-items: flex-end;
   gap: clamp(0.45rem, 1.7vw, 1.1rem);
+  width: max-content;
+  max-width: calc(100vw - 2rem);
   min-width: 0;
   padding: 0.6rem 0.5rem 0;
+  pointer-events: auto;
   & > button {
     transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease,
       top 320ms cubic-bezier(0.2, 0.75, 0.25, 1), rotate 320ms cubic-bezier(0.2, 0.75, 0.25, 1);

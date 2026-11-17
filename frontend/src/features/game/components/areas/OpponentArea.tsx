@@ -3,10 +3,13 @@ import {
   Hearts,
   OpponentCard,
   OpponentRow,
+  OpponentSeat,
   PlayerHealth,
   PlayerName,
   SmallCards,
 } from '../../gameStyles'
+import { PlayerCardFan } from '../cards/PlayerCardFan'
+import { PlayerShadow } from '../cards/PlayerShadow'
 
 type OpponentAreaProps = {
   game: GameState
@@ -28,27 +31,31 @@ export function OpponentArea({
   onSelectTarget,
 }: OpponentAreaProps) {
   return (
-    <OpponentRow aria-label="상대 플레이어">
+    <OpponentRow aria-label="상대 플레이어" $spread={opponents.length >= 2}>
       {opponents.map((player) => (
-        <OpponentCard
-          key={player.id}
-          type="button"
-          $active={game.turn.activePlayerId === player.id}
-          $selected={targetId === player.id}
-          $alive={player.alive}
-          disabled={mustDefend || !player.alive}
-          onClick={() => {
-            if (isMyTurn && needsTarget && player.alive) onSelectTarget(player.id)
-          }}
-          aria-pressed={targetId === player.id}
-        >
-          <PlayerName>{player.nickname}</PlayerName>
-          <PlayerHealth data-player-health-id={player.id} $small>
-            <span>{player.health}</span>
-            <Hearts $small>{'♥'.repeat(Math.max(0, player.health))}</Hearts>
-          </PlayerHealth>
-          <SmallCards>남은 카드 {player.cardCount}장</SmallCards>
-        </OpponentCard>
+        <OpponentSeat key={player.id}>
+          <OpponentCard
+            type="button"
+            $active={game.turn.activePlayerId === player.id}
+            $selected={targetId === player.id}
+            $alive={player.alive}
+            disabled={mustDefend || !player.alive}
+            onClick={() => {
+              if (isMyTurn && needsTarget && player.alive) onSelectTarget(player.id)
+            }}
+            aria-pressed={targetId === player.id}
+            data-player-info-id={player.id}
+          >
+            <PlayerName>{player.nickname}</PlayerName>
+            <PlayerHealth data-player-health-id={player.id} $small>
+              <span>{player.health}</span>
+              <Hearts $small>{'♥'.repeat(Math.max(0, player.health))}</Hearts>
+            </PlayerHealth>
+            <SmallCards>손에 든 카드 {player.cardCount}장</SmallCards>
+          </OpponentCard>
+          <PlayerCardFan count={player.cardCount} opponent playerId={player.id} />
+          <PlayerShadow playerId={player.id} />
+        </OpponentSeat>
       ))}
     </OpponentRow>
   )

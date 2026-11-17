@@ -10,6 +10,7 @@ import {
   Hand,
   Hearts,
   OwnIdentity,
+  OwnPlayerSeat,
   OwnName,
   PlayerHealth,
   TurnOrderItem,
@@ -19,6 +20,8 @@ import {
 } from '../../gameStyles'
 import { getCard, getCardEffectIcons } from '../../gameUi'
 import { CardMascot } from '../cards/CardMascot'
+import { PlayerCardFan } from '../cards/PlayerCardFan'
+import { PlayerShadow } from '../cards/PlayerShadow'
 import { animateCardDraw, hideCardUntilDraw } from '../animations/cardAnimations'
 import { useGameAudio } from '../../audio/GameAudioProvider'
 
@@ -32,7 +35,7 @@ type CardPointer = {
   moved: boolean
 }
 const DRAW_ANIMATION_DELAY_MS = 1000
-const HAND_REORDER_THRESHOLD = 0.15
+const HAND_REORDER_THRESHOLD = 0.07
 
 export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
   const { playSound } = useGameAudio()
@@ -236,13 +239,17 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
         resetCardActions()
       }}
     >
-      <OwnIdentity data-card-selection-ignore="true">
-        <OwnName>{self?.nickname ?? '나'}</OwnName>
-        <PlayerHealth data-player-health-id={self?.id} $small>
-          <span>{self?.health ?? 0}</span>
-          <Hearts $small>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
-        </PlayerHealth>
-      </OwnIdentity>
+      <OwnPlayerSeat data-card-selection-ignore="true">
+        <OwnIdentity data-player-info-id={self?.id}>
+          <OwnName>{self?.nickname ?? '나'}</OwnName>
+          <PlayerHealth data-player-health-id={self?.id} $small>
+            <span>{self?.health ?? 0}</span>
+            <Hearts $small>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
+          </PlayerHealth>
+        </OwnIdentity>
+        <PlayerCardFan count={hand.length} />
+        <PlayerShadow playerId={self?.id} self />
+      </OwnPlayerSeat>
       <Hand
         ref={handElement}
         aria-label="내 카드 패"
