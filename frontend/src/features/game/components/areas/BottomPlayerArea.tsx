@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { GameScreenProps } from '../../types'
 import {
   BottomArea,
@@ -32,16 +32,70 @@ type CardPointer = {
   moved: boolean
 }
 const DRAW_ANIMATION_DELAY_MS = 1000
+const HAND_REORDER_THRESHOLD = 0.15
 
 export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPreview, turnIntro, actions }: GameScreenProps) {
   const { playSound } = useGameAudio()
   const handElement = useRef<HTMLDivElement>(null)
+  const [handOrder, setHandOrder] = useState(() => hand.map((_, index) => index))
+  const handSignature = hand.join('\u0000')
+  const previousHandSignature = useRef(handSignature)
+  const pendingHandPositions = useRef<Map<number, { left: number; top: number }> | null>(null)
   const previousHand = useRef<string[]>([])
   const pendingDrawCards = useRef<DrawnCard[]>([])
   const cardPointer = useRef<CardPointer | null>(null)
   const dragPreview = useRef<HTMLElement | null>(null)
   const dragSource = useRef<HTMLElement | null>(null)
   const suppressClick = useRef(false)
+
+  useLayoutEffect(() => {
+    if (previousHandSignature.current === handSignature) return
+    previousHandSignature.current = handSignature
+    pendingHandPositions.current = null
+    setHandOrder(hand.map((_, index) => index))
+  }, [hand, handSignature])
+
+  useLayoutEffect(() => {
+    const previousPositions = pendingHandPositions.current
+    if (!previousPositions) return
+    pendingHandPositions.current = null
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+
+    handOrder.forEach((index) => {
+      const card = handElement.current?.querySelector<HTMLElement>(`[data-hand-index="${index}"]`)
+      const previousPosition = previousPositions.get(index)
+      if (!card || !previousPosition || typeof card.animate !== 'function') return
+      const rect = card.getBoundingClientRect()
+      const deltaX = previousPosition.left - rect.left
+      const deltaY = previousPosition.top - rect.top
+      if (Math.abs(deltaX) < 1 && Math.abs(deltaY) < 1) return
+      card.animate(
+        [
+          { translate: `${deltaX}px ${deltaY}px` },
+          { translate: '0px 0px' },
+        ],
+        { duration: 360, easing: 'cubic-bezier(0.2, 0.75, 0.25, 1)' },
+      )
+    })
+  }, [handOrder])
+
+  const reorderHandFrom = (index: number) => {
+    const positions = new Map<number, { left: number; top: number }>()
+    handElement.current?.querySelectorAll<HTMLElement>('[data-hand-index]').forEach((card) => {
+      const rect = card.getBoundingClientRect()
+      positions.set(Number(card.dataset.handIndex), { left: rect.left, top: rect.top })
+    })
+    pendingHandPositions.current = positions
+    setHandOrder((currentOrder) => {
+      if (currentOrder.length !== 2) return currentOrder
+      const sourcePosition = currentOrder.indexOf(index)
+      if (sourcePosition < 0) return currentOrder
+      const nextOrder = [...currentOrder]
+      const targetPosition = sourcePosition === 0 ? 1 : 0
+      ;[nextOrder[sourcePosition], nextOrder[targetPosition]] = [nextOrder[targetPosition], nextOrder[sourcePosition]]
+      return nextOrder
+    })
+  }
 
   const resetCardActions = () => {
     actions.setSelectedDeclarationId(null)
@@ -166,6 +220,10 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
     })
   }, [game.turn.phase, hand, playSound, turnIntro])
 
+  const displayHandOrder = handOrder.length === hand.length
+    ? handOrder
+    : hand.map((_, index) => index)
+
   return (
     <BottomArea
       data-card-dropzone="hand"
@@ -189,7 +247,8 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
         ref={handElement}
         aria-label="내 카드 패"
       >
-        {hand.map((cardId, index) => {
+        {displayHandOrder.map((index) => {
+          const cardId = hand[index]
           const card = getCard(cardId)
           const cardOccurrence = hand.slice(0, index).filter((id) => id === cardId).length
           return (
@@ -311,14 +370,31 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
                     && event.clientX <= handRect.right
                     && event.clientY >= handRect.top
                     && event.clientY <= handRect.bottom)
-                  if (droppedInCenter) {
+                  const handCardsRect = handElement.current?.getBoundingClientRect()
+                  const droppedInCardHand = Boolean(handCardsRect
+                    && event.clientX >= handCardsRect.left
+                    && event.clientX <= handCardsRect.right
+                    && event.clientY >= handCardsRect.top
+                    && event.clientY <= handCardsRect.bottom)
+                  const horizontalDistance = event.clientX - activePointer.startX
+                  const visiblePosition = displayHandOrder.indexOf(index)
+                  const crossedReorderThreshold = Math.abs(horizontalDistance) >= window.innerWidth * HAND_REORDER_THRESHOLD
+                  const shouldReorder = hand.length === 2
+                    && droppedInCardHand
+                    && crossedReorderThreshold
+                    && ((visiblePosition === 0 && horizontalDistance > 0)
+                      || (visiblePosition === 1 && horizontalDistance < 0))
+                  if (shouldReorder) reorderHandFrom(index)
+                  const droppedAboveHand = Boolean(handRect && event.clientY < handRect.top)
+                  const shouldSelectCard = !shouldReorder && (droppedInCenter || droppedAboveHand)
+                  if (shouldSelectCard) {
                     selectDraggedCard(index)
-                  } else if (droppedInHand && selectedHandIndex === index) {
+                  } else if (!shouldReorder && droppedInHand && selectedHandIndex === index) {
                     playSound('deselectCard')
                     actions.setSelectedHandIndex(null)
                     resetCardActions()
                   }
-                  if (droppedInCenter) clearDragPreview()
+                  if (shouldReorder || shouldSelectCard) clearDragPreview()
                   else animateDragPreviewReturn()
                   suppressClick.current = true
                   window.setTimeout(() => { suppressClick.current = false }, 0)

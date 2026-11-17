@@ -6,7 +6,9 @@ import {
   CardEffectIcons,
   CenterContent,
   Deck,
+  DeckBack,
   DeckCount,
+  DeckStack,
   DeclaredCard,
   DeclaredCardEnglish,
   DeclaredCardName,
@@ -24,6 +26,7 @@ import {
 import { CardMascot } from '../cards/CardMascot'
 import { getCard, getCardEffectIcons, type DeclarationNotice } from '../../gameUi'
 import { useGameAudio } from '../../audio/GameAudioProvider'
+import cardBackImage from '../../../../assets/image/card-back.jpg'
 
 export function CenterInfoArea({
   game,
@@ -145,9 +148,16 @@ export function CenterInfoArea({
               <DeclaredCardEnglish>{previewCard?.en ?? 'Card Declaration'}</DeclaredCardEnglish>
             </DeclaredCard>
           </DeclarationPanel>
-          <Deck data-deck-source="true">
+          <Deck>
             <span>남은 카드</span>
             <DeckCount>{game.cardDeckCount}</DeckCount>
+            {game.cardDeckCount > 0 && (
+              <DeckStack data-deck-source="true" aria-hidden="true">
+                {[0, 1, 2].map((layer) => (
+                  <DeckBack key={layer} src={cardBackImage} alt="" $layer={layer} draggable={false} />
+                ))}
+              </DeckStack>
+            )}
           </Deck>
         </TableState>
         <Status

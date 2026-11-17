@@ -147,6 +147,11 @@ export const SmallCards = styled.div`
   color: #fff;
   font-size: 0.72rem;
 `
+const tableGlowDrift = keyframes`
+  from { transform: translateX(-4%); }
+  to { transform: translateX(4%); }
+`
+
 export const PlayField = styled.div`
   position: relative;
   display: grid;
@@ -161,12 +166,21 @@ export const PlayField = styled.div`
   border: 1px solid #9b7646;
   border-radius: 1.4rem;
   background:
-    radial-gradient(ellipse 34% 48% at 50% 42%, rgb(255 226 150 / 18%) 0%, rgb(255 211 100 / 8%) 40%, rgb(255 208 110 / 0%) 78%),
     radial-gradient(ellipse 48% 62% at 50% 34%, rgb(255 245 229 / 48%) 0%, rgb(255 174 129 / 24%) 38%, rgb(255 174 129 / 0%) 78%),
     radial-gradient(ellipse at center, rgb(0 0 0 / 0%) 8%, rgb(8 7 8 / 28%) 52%, rgb(4 3 5 / 76%) 100%),
     linear-gradient(rgb(0 0 0 / 58%), rgb(0 0 0 / 58%)),
     url(${woodImage}) center / cover no-repeat;
   box-shadow: inset 0 2px 0 rgb(255 255 255 / 20%), 0 3px 0 #21170f, 0 8px 18px rgb(24 16 10 / 22%);
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(ellipse 34% 48% at 50% 42%, rgb(255 226 150 / 18%) 0%, rgb(255 211 100 / 8%) 40%, rgb(255 208 110 / 0%) 78%);
+    pointer-events: none;
+    animation: ${tableGlowDrift} 42s ease-in-out infinite alternate;
+  }
   @media (max-width: 760px) {
     width: 100%;
     min-height: 22rem;
@@ -177,6 +191,9 @@ export const PlayField = styled.div`
   }
   @media (max-height: 700px) {
     min-height: 17rem;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &::before { animation: none; }
   }
 `
 export const CenterContent = styled.div<{ $hidden: boolean }>`
@@ -237,6 +254,26 @@ export const DeckCount = styled.div`
   font-weight: 850;
   line-height: 1;
   text-shadow: 0 2px 0 #3b291b;
+`
+export const DeckStack = styled.div`
+  position: relative;
+  width: clamp(4.8rem, 5.5vw, 6rem);
+  height: clamp(6.2rem, 8vh, 7.8rem);
+  margin-top: 0.05rem;
+  perspective: 700px;
+`
+export const DeckBack = styled.img<{ $layer: number }>`
+  position: absolute;
+  top: ${({ $layer }) => `${$layer * 0.18}rem`};
+  left: ${({ $layer }) => `${$layer * 0.18}rem`};
+  z-index: ${({ $layer }) => $layer};
+  width: calc(100% - 0.36rem);
+  height: calc(100% - 0.36rem);
+  border: 2px solid #392719;
+  border-radius: 0.55rem;
+  box-shadow: 0 2px 0 #21170f, 0 5px 9px rgb(0 0 0 / 34%);
+  object-fit: cover;
+  transform: rotateY(-5deg) rotateZ(${({ $layer }) => `${($layer - 1) * -2}deg`});
 `
 export const DeclarationPanel = styled.div`
   display: grid;
@@ -703,6 +740,10 @@ export const Hand = styled.div`
   gap: clamp(0.45rem, 1.7vw, 1.1rem);
   min-width: 0;
   padding: 0.6rem 0.5rem 0;
+  & > button {
+    transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease,
+      top 320ms cubic-bezier(0.2, 0.75, 0.25, 1), rotate 320ms cubic-bezier(0.2, 0.75, 0.25, 1);
+  }
   & > button:first-child {
     position: relative;
     top: 0.35rem;

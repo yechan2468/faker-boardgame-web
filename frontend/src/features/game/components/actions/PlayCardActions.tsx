@@ -26,7 +26,7 @@ function getEffectHint(card: CardInfo, truthful: boolean) {
     ? `상대방이 의심 시: 의심한 플레이어가 피해 2 💔💔, ${passEffect}`
     : '상대방이 의심 시: 선언 무효화, 의심한 플레이어가 나의 체력 2 강탈 💔💔'
 
-  return `상대방이 패스 시: ${passEffect}\n${challengeEffect}`
+  return `상대방이 신뢰 시: ${passEffect}\n${challengeEffect}`
 }
 
 export function PlayCardActions({
