@@ -20,7 +20,7 @@ export default function GameScreen(props: GameScreenProps) {
   }, [props.game.matchResult, playSound])
 
   return (
-    <Page onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()}>
+    <Page data-player-shadow-layer="true" onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()}>
       <HealthChangeAnimator game={props.game} />
       <GameHeader {...props} onOpenMenu={() => actions.setModalOpen(true)} />
       <GameBoardLayout {...props} />

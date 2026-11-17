@@ -1,6 +1,5 @@
 import type { GameState, PublicPlayer } from '../../../../types/game'
 import {
-  Hearts,
   OpponentCard,
   OpponentRow,
   OpponentSeat,
@@ -10,6 +9,7 @@ import {
 } from '../../gameStyles'
 import { PlayerCardFan } from '../cards/PlayerCardFan'
 import { PlayerShadow } from '../cards/PlayerShadow'
+import { PlayerHearts } from './PlayerHearts'
 
 type OpponentAreaProps = {
   game: GameState
@@ -49,8 +49,8 @@ export function OpponentArea({
             <PlayerName>{player.nickname}</PlayerName>
             <PlayerHealth data-player-health-id={player.id} $small>
               <span>{player.health}</span>
-              <Hearts $small>{'♥'.repeat(Math.max(0, player.health))}</Hearts>
             </PlayerHealth>
+            <PlayerHearts count={player.health} />
             <SmallCards>손에 든 카드 {player.cardCount}장</SmallCards>
           </OpponentCard>
           <PlayerCardFan count={player.cardCount} opponent playerId={player.id} />

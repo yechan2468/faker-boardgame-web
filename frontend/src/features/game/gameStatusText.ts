@@ -10,6 +10,7 @@ type GameStatusTextOptions = {
   elapsedTurn: string
   elapsedPhase: string
   attackResolutionNotice: AttackResolutionNotice | null
+  falseDeclarationLongEffect: string | null
   defenseResolutionNotice: DefenseResolutionNotice | null
   defenseOutcomeNotice: DefenseOutcomeNotice | null
   alchemistResolutionNotice: AlchemistResolutionNotice | null
@@ -23,6 +24,7 @@ export function getGameStatusText({
   elapsedTurn,
   elapsedPhase,
   attackResolutionNotice,
+  falseDeclarationLongEffect,
   defenseResolutionNotice,
   defenseOutcomeNotice,
   alchemistResolutionNotice,
@@ -72,11 +74,24 @@ export function getGameStatusText({
       ? `잘못 의심한 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력을 2 💔💔 잃고, ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님의 방어 카드 능력이 그대로 적용됩니다.`
       : `거짓이 발각되어 ${getPlayerName(game.players, defenseResolutionNotice.defenderId)} 님이 체력을 2 💔💔 잃고 ${getPlayerName(game.players, defenseResolutionNotice.challengerId)} 님이 체력을 2 ❤️❤️ 얻습니다. 방어 카드의 능력은 무효화됩니다.`
     : null
+  const attackResolutionStatusWithEffect = attackResolutionNotice?.truthful === false
+    && attackResolutionStatus
+    && falseDeclarationLongEffect
+    ? `${attackResolutionStatus}\n${falseDeclarationLongEffect}`
+    : attackResolutionStatus
+  const defenseResolutionStatusWithEffect = defenseResolutionNotice?.truthful === false
+    && defenseResolutionStatus
+    && falseDeclarationLongEffect
+    ? `${defenseResolutionStatus}\n${falseDeclarationLongEffect}`
+    : defenseResolutionStatus
+  const defenseOutcomeStatusWithEffect = defenseOutcomeStatus && falseDeclarationLongEffect
+    ? `${defenseOutcomeStatus}\n${falseDeclarationLongEffect}`
+    : defenseOutcomeStatus
 
-  return defenseOutcomeStatus
-    ?? defenseResolutionStatus
+  return defenseOutcomeStatusWithEffect
+    ?? defenseResolutionStatusWithEffect
     ?? alchemistResolutionStatus
-    ?? attackResolutionStatus
+    ?? attackResolutionStatusWithEffect
     ?? (errorMessage
       ? errorMessage
       : game?.status !== 'IN_GAME'

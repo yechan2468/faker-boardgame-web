@@ -8,11 +8,11 @@ import {
   CardKorean,
   GameCard,
   Hand,
-  Hearts,
   OwnIdentity,
   OwnPlayerSeat,
   OwnName,
   PlayerHealth,
+  SmallCards,
   TurnOrderItem,
   TurnOrderLabel,
   TurnOrderName,
@@ -20,8 +20,8 @@ import {
 } from '../../gameStyles'
 import { getCard, getCardEffectIcons } from '../../gameUi'
 import { CardMascot } from '../cards/CardMascot'
-import { PlayerCardFan } from '../cards/PlayerCardFan'
 import { PlayerShadow } from '../cards/PlayerShadow'
+import { PlayerHearts } from './PlayerHearts'
 import { animateCardDraw, hideCardUntilDraw } from '../animations/cardAnimations'
 import { useGameAudio } from '../../audio/GameAudioProvider'
 
@@ -240,15 +240,15 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
       }}
     >
       <OwnPlayerSeat data-card-selection-ignore="true">
-        <OwnIdentity data-player-info-id={self?.id}>
+        <OwnIdentity $active={game.turn?.activePlayerId === self?.id} data-player-info-id={self?.id}>
           <OwnName>{self?.nickname ?? '나'}</OwnName>
           <PlayerHealth data-player-health-id={self?.id} $small>
             <span>{self?.health ?? 0}</span>
-            <Hearts $small>{'♥'.repeat(Math.max(0, self?.health ?? 0))}</Hearts>
           </PlayerHealth>
+          <PlayerHearts count={self?.health ?? 0} />
+          <SmallCards>손에 든 카드 {hand.length}장</SmallCards>
         </OwnIdentity>
-        <PlayerCardFan count={hand.length} />
-        <PlayerShadow playerId={self?.id} self />
+        <PlayerShadow playerId={self?.id} />
       </OwnPlayerSeat>
       <Hand
         ref={handElement}

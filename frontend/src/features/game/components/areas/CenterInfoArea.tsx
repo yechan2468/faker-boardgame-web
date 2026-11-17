@@ -35,6 +35,7 @@ export function CenterInfoArea({
   self,
   errorMessage,
   statusText,
+  turnEndWaitingText,
   waitingForTurnEnd,
   turnIntro,
   displayedDeclaration,
@@ -193,10 +194,12 @@ export function CenterInfoArea({
         <Status
           data-error={Boolean(errorMessage)}
           data-has-personal-timer={!errorMessage && /\((?:\d+|\d{2}:\d{2})\)$/.test(statusText)}
-          data-waiting-turn-end={waitingForTurnEnd}
         >
           {statusText}
         </Status>
+        {waitingForTurnEnd && turnEndWaitingText && (
+          <Status data-waiting-turn-end="true">{turnEndWaitingText}</Status>
+        )}
         {game.status === 'LOBBY' && self?.role === 'HOST' && (
           game.matchResult ? (
             <GameActionButtons>

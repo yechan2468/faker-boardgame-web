@@ -24,16 +24,16 @@ export function GameBoardLayout(props: GameScreenProps) {
           }}
         >
           <CenterInfoArea {...props} />
-          {props.turnIntro && (
-            <TurnIntroOverlay
-              currentTurnId={props.currentTurnId}
-              text={props.turnOverlayText}
-              onFinished={() => actions.setTurnIntro(false)}
-            />
-          )}
         </PlayField>
         <BottomPlayerArea {...props} />
       </Board>
+      {props.turnIntro && (
+        <TurnIntroOverlay
+          currentTurnId={props.currentTurnId}
+          text={props.turnOverlayText}
+          onFinished={() => actions.setTurnIntro(false)}
+        />
+      )}
       <GameActionArea {...props} />
     </>
   )

@@ -37,6 +37,7 @@ export function SuspicionPanel(props: GameScreenProps) {
           {suspicionPasserNames.length > 0
             ? `${suspicionPasserNames.join(', ')} 님이 신뢰하였습니다. `
             : '아직 신뢰한 플레이어가 없습니다. '}
+          <br />
           {suspicionWaitingNames.length > 0
             ? `${suspicionWaitingNames} 님의 선택 대기 중...`
             : '모두 선택했습니다.'}
@@ -64,7 +65,7 @@ export function SuspicionPanel(props: GameScreenProps) {
         )}
         {game.viewerId !== suspicionCardOwnerId && (
           <ActionButton type="button" onClick={actions.passSuspicion} disabled={hasPassedSuspicion}>
-            {hasPassedSuspicion ? '신뢰 완료 · 다른 플레이어 대기 중' : '신뢰하기'}
+            {hasPassedSuspicion ? '신뢰 완료' : '신뢰하기'}
           </ActionButton>
         )}
       </Choice>

@@ -4,14 +4,13 @@ import { PlayerShadowShape } from '../../gameStyles'
 
 type PlayerShadowProps = {
   playerId?: string
-  self?: boolean
 }
 
 type ShadowPosition = { left: number; top: number; height: number }
 
-const SHADOW_HEIGHT_RATIO = 0.34
+const SHADOW_HEIGHT_RATIO = 0.68
 
-export function PlayerShadow({ playerId, self = false }: PlayerShadowProps) {
+export function PlayerShadow({ playerId }: PlayerShadowProps) {
   const [position, setPosition] = useState<ShadowPosition | null>(null)
 
   useLayoutEffect(() => {
@@ -23,10 +22,10 @@ export function PlayerShadow({ playerId, self = false }: PlayerShadowProps) {
       if (!infoBox) return
 
       const infoRect = infoBox.getBoundingClientRect()
-      const height = Math.max(180, window.innerHeight * SHADOW_HEIGHT_RATIO)
+      const height = Math.max(360, window.innerHeight * SHADOW_HEIGHT_RATIO)
       setPosition({
         left: infoRect.left + infoRect.width / 2,
-        top: self ? infoRect.top - height + 20 : infoRect.bottom - 18,
+        top: infoRect.bottom - height * 0.45,
         height,
       })
     }
@@ -45,9 +44,11 @@ export function PlayerShadow({ playerId, self = false }: PlayerShadowProps) {
       window.removeEventListener('resize', updatePosition)
       window.removeEventListener('scroll', updatePosition, true)
     }
-  }, [playerId, self])
+  }, [playerId])
 
   if (!position) return null
+  const shadowLayer = document.querySelector<HTMLElement>('[data-player-shadow-layer]')
+  if (!shadowLayer) return null
 
   return createPortal(
     <PlayerShadowShape
@@ -56,6 +57,6 @@ export function PlayerShadow({ playerId, self = false }: PlayerShadowProps) {
       $height={position.height}
       aria-hidden="true"
     />,
-    document.body,
+    shadowLayer,
   )
 }

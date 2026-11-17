@@ -2,7 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { GameState, PublicPlayer } from '../../types/game'
-import { CARD_INFO, getCard, getPlayerName, type DeclarationNotice } from './gameUi'
+import { CARD_INFO, getCard, getCardLongEffect, getPlayerName, type DeclarationNotice } from './gameUi'
 import { createGameActions } from './gameActions'
 import { useGameAudio } from './audio/GameAudioProvider'
 import { fetchGameState, fetchLeaderboard } from './gameQueries'
@@ -154,18 +154,6 @@ export function useGameController(): GameControllerResult {
   )
   const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
   const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
-  const defaultStatusText = getGameStatusText({
-    game,
-    isMyTurn,
-    mustDefend,
-    errorMessage,
-    elapsedTurn,
-    elapsedPhase,
-    attackResolutionNotice,
-    defenseResolutionNotice,
-    defenseOutcomeNotice,
-    alchemistResolutionNotice,
-  })
   const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
   const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
   const gameActions = createGameActions({
@@ -245,13 +233,32 @@ export function useGameController(): GameControllerResult {
           ? ` (대상: ${displayedDeclaration.targetIds.map((playerId) => getPlayerName(game?.players ?? [], playerId)).join(', ')})`
           : ''}`
     : null
+  const falseDeclarationLongEffect = displayedDeclaration?.truthful === false
+    && displayedDeclaration.actualCardId
+    && displayedDeclaration.actualCardId !== 'clown'
+    ? getCardLongEffect(displayedDeclaration.actualCardId)
+    : null
+  const defaultStatusText = getGameStatusText({
+    game,
+    isMyTurn,
+    mustDefend,
+    errorMessage,
+    elapsedTurn,
+    elapsedPhase,
+    attackResolutionNotice,
+    falseDeclarationLongEffect,
+    defenseResolutionNotice,
+    defenseOutcomeNotice,
+    alchemistResolutionNotice,
+  })
   const waitingForTurnEnd = game?.status === 'IN_GAME'
     && game.turn.phase === 'RESOLVED'
     && !isMyTurn
     && (displayedDeclaration?.truthful === true || displayedDeclaration?.truthful === false)
-  const statusText = waitingForTurnEnd
+  const turnEndWaitingText = waitingForTurnEnd
     ? `${activeTurnName ?? '상대'} 님의 턴 종료를 기다리는 중... (${elapsedPhase})`
-    : defaultStatusText
+    : ''
+  const statusText = defaultStatusText
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
     const wins = new Map((leaderboardQuery.data ?? []).map((entry) => [entry.playerId, entry.wins]))
@@ -312,6 +319,7 @@ export function useGameController(): GameControllerResult {
       modalOpen,
       errorMessage,
       statusText,
+      turnEndWaitingText,
       waitingForTurnEnd,
       turnIntro,
       turnOverlayText,
