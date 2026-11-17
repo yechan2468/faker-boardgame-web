@@ -201,10 +201,7 @@ final class GameTurnService {
         String session = state.playersBySession.entrySet().stream().filter(e -> e.getValue().id().equals(defenderId)).findFirst().orElseThrow().getKey();
         state.playersBySession.put(session, state.withCards(defender, hand));
         state.pendingPlay.targets.remove(defenderId);
-        if (defenseCardId.equals("wizard")) {
-            state.pendingPlay.targets.add(redirectTargetId);
-            state.pendingPlay.defensePasses.remove(redirectTargetId);
-        }
+        if (defenseCardId.equals("wizard")) state.pendingPlay.defensePasses.remove(redirectTargetId);
         advanceAfterDefenseIfComplete();
         return state.currentState();
     }
@@ -234,11 +231,9 @@ final class GameTurnService {
         passHandlessTargets();
         if (state.pendingPlay.targets.stream().allMatch(state.pendingPlay.defensePasses::contains)) {
             state.pendingPlay.suspicionPasses.clear();
-            if (state.pendingPlay.defenses.isEmpty()) finishPendingPlay();
-            else {
-                state.pendingPlay.defenseSuspicionCursor = 0;
+            if (state.pendingPlay.defenseSuspicionCursor < state.pendingPlay.defenses.size()) {
                 state.turn = new TurnState(state.turn.number(), state.turn.activePlayerId(), "DEFENSE_SUSPICION");
-            }
+            } else resolveDefenseRound();
         }
     }
 
@@ -259,7 +254,40 @@ final class GameTurnService {
         if (state.pendingPlay == null || !"DEFENSE_SUSPICION".equals(state.turn.phase())) return;
         state.pendingPlay.suspicionPasses.clear();
         state.pendingPlay.defenseSuspicionCursor++;
-        if (state.pendingPlay.defenseSuspicionCursor >= state.pendingPlay.defenses.size()) finishPendingPlay();
+        if (state.pendingPlay.defenseSuspicionCursor >= state.pendingPlay.defenses.size()) resolveDefenseRound();
+    }
+
+    private void resolveDefenseRound() {
+        if (state.pendingPlay == null) return;
+
+        List<String> resolvedTargets = new ArrayList<>(state.pendingPlay.originalTargets);
+        for (GameRuntimeState.PendingDefense defense : state.pendingPlay.defenses) {
+            if (!resolvedTargets.contains(defense.playerId) || Boolean.FALSE.equals(defense.truthful)) continue;
+            resolvedTargets.remove(defense.playerId);
+            if ("wizard".equals(defense.declaredCardId) && defense.redirectTargetId != null
+                    && !resolvedTargets.contains(defense.redirectTargetId)) {
+                resolvedTargets.add(defense.redirectTargetId);
+            }
+        }
+
+        java.util.Set<String> respondedPlayers = new java.util.HashSet<>(state.pendingPlay.defensePasses);
+        state.pendingPlay.defenses.forEach(defense -> respondedPlayers.add(defense.playerId));
+        state.pendingPlay.targets.clear();
+        resolvedTargets.stream()
+                .filter(targetId -> state.playersBySession.values().stream()
+                        .anyMatch(player -> player.id().equals(targetId) && player.health() > 0))
+                .filter(targetId -> !respondedPlayers.contains(targetId))
+                .forEach(state.pendingPlay.targets::add);
+
+        if (state.pendingPlay.targets.isEmpty()) {
+            finishPendingPlay();
+            return;
+        }
+
+        state.pendingPlay.suspicionPasses.clear();
+        state.turn = new TurnState(state.turn.number(), state.turn.activePlayerId(), "DEFENSE");
+        passHandlessTargets();
+        advanceAfterDefenseIfComplete();
     }
 
     private String suspicionCardOwnerId() {
