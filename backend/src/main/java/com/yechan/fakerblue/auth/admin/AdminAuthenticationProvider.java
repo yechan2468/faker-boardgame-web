@@ -20,14 +20,17 @@ public class AdminAuthenticationProvider implements AuthenticationProvider {
     private static final Logger logger = LoggerFactory.getLogger(AdminAuthenticationProvider.class);
 
     private final String adminUsername;
+    private final String adminNickname;
     private final String encodedAdminPassword;
     private final PasswordEncoder passwordEncoder;
 
     public AdminAuthenticationProvider(
             @Value("${faker.auth.admin.username:host}") String adminUsername,
             @Value("${faker.auth.admin.password:}") String adminPassword,
+            @Value("${faker.auth.admin.nickname:호스트}") String adminNickname,
             PasswordEncoder passwordEncoder) {
         this.adminUsername = adminUsername;
+        this.adminNickname = adminNickname;
         this.passwordEncoder = passwordEncoder;
         this.encodedAdminPassword = adminPassword.isBlank()
                 ? null
@@ -58,7 +61,7 @@ public class AdminAuthenticationProvider implements AuthenticationProvider {
         }
 
         GamePrincipal principal = new GamePrincipal(
-                UUID.randomUUID().toString(), adminUsername, "호스트", PlayerRole.HOST);
+                UUID.randomUUID().toString(), adminUsername, adminNickname, PlayerRole.HOST);
         return UsernamePasswordAuthenticationToken.authenticated(
                 principal, null, principal.getAuthorities());
     }

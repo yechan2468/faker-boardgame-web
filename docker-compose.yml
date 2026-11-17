@@ -5,6 +5,7 @@ services:
     environment:
       FAKER_BLUE_ADMIN_USERNAME: ${FAKER_BLUE_ADMIN_USERNAME:?Set FAKER_BLUE_ADMIN_USERNAME in .env}
       FAKER_BLUE_ADMIN_PASSWORD: ${FAKER_BLUE_ADMIN_PASSWORD:?Set FAKER_BLUE_ADMIN_PASSWORD in .env}
+      FAKER_BLUE_ADMIN_NICKNAME: ${FAKER_BLUE_ADMIN_NICKNAME:-호스트}
       FAKER_BLUE_ALLOWED_ORIGIN_PATTERNS: "http://localhost:*,https://localhost:*,http://127.0.0.1:*,https://127.0.0.1:*"
     restart: unless-stopped
 
