@@ -1,4 +1,5 @@
-import { getCard, getPlayerName } from '../../gameUi'
+import { getCard } from '../../utils/cardCatalog'
+import { getPlayerName } from '../../utils/playerNames'
 import type { GameScreenProps } from '../../types'
 import { ActionChoices, Choice, ChoiceTitle, Pill, Pills } from '../../gameStyles'
 

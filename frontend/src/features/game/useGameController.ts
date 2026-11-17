@@ -1,15 +1,14 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { GameState, PublicPlayer } from '../../types/game'
-import { CARD_INFO, getCard, getCardLongEffect, getPlayerName, type DeclarationNotice } from './gameUi'
-import { createGameActions } from './gameActions'
+import type { DeclarationNotice } from './types'
+import { createGameActionCommands } from './gameActionCommands'
 import { useGameAudio } from './audio/GameAudioProvider'
-import { fetchGameState, fetchLeaderboard } from './gameQueries'
-import { getGameStatusText } from './gameStatusText'
+import { fetchGameState, fetchLeaderboard } from './api/gameQueries'
 import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice, GameScreenProps } from './types'
-import { useGameConnection } from './useGameConnection'
+import { useGameConnection } from './connection/useGameConnection'
 import { useGameTimers } from './useGameTimers'
+import { deriveGameViewModel } from './gameViewModel'
 
 export type GameControllerResult =
   | { kind: 'loading' }
@@ -50,7 +49,6 @@ export function useGameController(): GameControllerResult {
   const previousMustDefendRef = useRef(false)
   const previousGameStatusRef = useRef<string | null>(null)
   const game = gameQuery.data
-  const pending = game?.pendingAction ?? null
   const gameStatus = game?.status
   const currentTurnId = game?.turn.activePlayerId ?? null
   const viewerId = game?.viewerId ?? null
@@ -134,29 +132,23 @@ export function useGameController(): GameControllerResult {
     staleTime: 10_000,
   })
 
-  const self = game?.players.find((player) => player.id === game.viewerId)
-  const opponents = game?.players.filter((player) => player.id !== game.viewerId) ?? []
-  const aliveTurnOrder = game?.status === 'IN_GAME'
-    ? game.turnOrder
-      .map((playerId) => game.players.find((player) => player.id === playerId))
-      .filter((player): player is PublicPlayer => Boolean(player?.alive))
-    : []
-  const currentOrderIndex = aliveTurnOrder.findIndex((player) => player.id === game?.turn.activePlayerId)
-  const turnPreview = currentOrderIndex < 0
-    ? []
-    : [...aliveTurnOrder.slice(currentOrderIndex), ...aliveTurnOrder.slice(0, currentOrderIndex)].slice(0, 4)
-  const isMyTurn = Boolean(game?.status === 'IN_GAME' && game.turn.activePlayerId === game.viewerId)
-  const mustDefend = Boolean(
-    game?.turn.phase === 'DEFENSE' &&
-    pending && viewerId && pending.targetIds.includes(viewerId) &&
-    !pending.defensePasses.includes(viewerId) &&
-    !pending.defenses.some((defense) => defense.playerId === viewerId),
-  )
-  const activeTurnName = game?.players.find((player) => player.id === currentTurnId)?.nickname
-  const turnOverlayText = isMyTurn ? '나의 턴' : activeTurnName ? `${activeTurnName} 님의 턴` : '턴 변경'
-  const selectedCard = selectedHandIndex === null ? null : getCard(hand[selectedHandIndex] ?? '')
-  const selectedDeclaration = selectedDeclarationId ? getCard(selectedDeclarationId) : null
-  const gameActions = createGameActions({
+  const viewModel = deriveGameViewModel({
+    game,
+    hand,
+    selectedHandIndex,
+    selectedDeclarationId,
+    declarationNotice,
+    errorMessage,
+    elapsedTurn,
+    elapsedPhase,
+    attackResolutionNotice,
+    defenseResolutionNotice,
+    defenseOutcomeNotice,
+    alchemistResolutionNotice,
+  })
+  const { self, mustDefend, selectedCard, selectedDeclaration } = viewModel
+
+  const gameActionCommands = createGameActionCommands({
     game,
     self,
     clientRef,
@@ -188,77 +180,6 @@ export function useGameController(): GameControllerResult {
       endFailed: '게임을 종료하지 못했습니다.',
     },
   })
-  const needsTarget = Boolean(selectedDeclaration?.target)
-  const eligibleDeclarations = CARD_INFO
-    .filter((card) => !['wizard', 'defender'].includes(card.id))
-    .sort((left, right) => right.value - left.value)
-  const activeDefenseDeclaration = game?.turn.phase === 'DEFENSE_SUSPICION'
-    ? pending?.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)
-    : null
-  const pendingDeclarationNotice: DeclarationNotice | null = activeDefenseDeclaration
-    ? {
-        playerId: activeDefenseDeclaration.playerId,
-        declaredCardId: activeDefenseDeclaration.declaredCardId,
-        truthful: activeDefenseDeclaration.truthful,
-        actualCardId: activeDefenseDeclaration.actualCardId,
-        targetIds: [],
-      }
-    : pending
-      ? {
-          playerId: pending.actorId,
-          declaredCardId: pending.declaredCardId,
-          truthful: pending.attackerTruthful,
-          actualCardId: pending.attackerActualCardId,
-          targetIds: pending.targetIds,
-        }
-      : null
-  const displayedDeclaration = declarationNotice ?? pendingDeclarationNotice
-  const displayedCard = displayedDeclaration ? getCard(displayedDeclaration.declaredCardId) : null
-  const displayedPlayerName = displayedDeclaration
-    ? getPlayerName(game?.players ?? [], displayedDeclaration.playerId)
-    : null
-  const declarationBaseLabel = displayedDeclaration && displayedCard
-    ? displayedCard.target || displayedCard.allTargets
-      ? displayedDeclaration.playerId === viewerId
-        ? `나의 ${displayedCard.ko} 선언`
-        : `${displayedPlayerName} 님이 ${displayedCard.ko} 선언`
-      : displayedDeclaration.playerId === viewerId
-        ? `나의 ${displayedCard.ko} 선언`
-        : `${displayedPlayerName} 님의 ${displayedCard.ko} 선언`
-    : null
-  const displayedDeclarationLabel = displayedDeclaration && displayedCard
-    ? `${declarationBaseLabel}${displayedCard.allTargets
-        ? ' (대상: 전원)'
-        : displayedCard.target && displayedDeclaration.targetIds?.length
-          ? ` (대상: ${displayedDeclaration.targetIds.map((playerId) => getPlayerName(game?.players ?? [], playerId)).join(', ')})`
-          : ''}`
-    : null
-  const falseDeclarationLongEffect = displayedDeclaration?.truthful === false
-    && displayedDeclaration.actualCardId
-    && displayedDeclaration.actualCardId !== 'clown'
-    ? getCardLongEffect(displayedDeclaration.actualCardId)
-    : null
-  const defaultStatusText = getGameStatusText({
-    game,
-    isMyTurn,
-    mustDefend,
-    errorMessage,
-    elapsedTurn,
-    elapsedPhase,
-    attackResolutionNotice,
-    falseDeclarationLongEffect,
-    defenseResolutionNotice,
-    defenseOutcomeNotice,
-    alchemistResolutionNotice,
-  })
-  const waitingForTurnEnd = game?.status === 'IN_GAME'
-    && game.turn.phase === 'RESOLVED'
-    && !isMyTurn
-    && (displayedDeclaration?.truthful === true || displayedDeclaration?.truthful === false)
-  const turnEndWaitingText = waitingForTurnEnd
-    ? `${activeTurnName ?? '상대'} 님의 턴 종료를 기다리는 중... (${elapsedPhase})`
-    : ''
-  const statusText = defaultStatusText
   const modalLeaderboard = useMemo(() => {
     if (!game) return []
     const wins = new Map((leaderboardQuery.data ?? []).map((entry) => [entry.playerId, entry.wins]))
@@ -267,7 +188,6 @@ export function useGameController(): GameControllerResult {
       .sort((left, right) => right.wins - left.wins || left.nickname.localeCompare(right.nickname, 'ko'))
   }, [game, leaderboardQuery.data])
 
-  const canAct = Boolean(isMyTurn && game?.turn.phase === 'START' && !pending)
   useEffect(() => {
     if (mustDefend && !previousMustDefendRef.current) {
       setSelectedHandIndex(null)
@@ -276,25 +196,6 @@ export function useGameController(): GameControllerResult {
     }
     previousMustDefendRef.current = mustDefend
   }, [mustDefend])
-  const hasDefenderCard = hand.includes('defender')
-  const hasWizardCard = hand.includes('wizard')
-  const redirectTargets = opponents.filter((player) => player.alive && !pending?.targetIds.includes(player.id))
-  const hasPassedSuspicion = Boolean(pending?.suspicionPasses.includes(game?.viewerId ?? ''))
-  const suspicionPlayers = game?.players ?? []
-  const suspicionCardOwnerId = game?.turn.phase === 'SUSPICION'
-    ? pending?.actorId
-    : game?.turn.phase === 'DEFENSE_SUSPICION'
-      ? pending?.defenses.find((defense) => defense.index === pending.suspicionDefenseIndex)?.playerId
-      : undefined
-  const suspicionPasserNames = (pending?.suspicionPasses ?? [])
-    .map((playerId) => getPlayerName(suspicionPlayers, playerId))
-  const suspicionWaitingNames = suspicionPlayers
-    .filter((player) => player.alive && player.id !== suspicionCardOwnerId
-      && !pending?.suspicionPasses.includes(player.id))
-    .map((player) => player.nickname)
-    .join(', ')
-
-
   if (gameQuery.isLoading) return { kind: 'loading' }
   if (gameQuery.isError || !game) {
     return {
@@ -308,8 +209,7 @@ export function useGameController(): GameControllerResult {
     kind: 'ready',
     screen: {
       game,
-      self,
-      opponents,
+      ...viewModel,
       hand,
       selectedHandIndex,
       selectedDeclarationId,
@@ -318,31 +218,9 @@ export function useGameController(): GameControllerResult {
       redirectTargetId,
       modalOpen,
       errorMessage,
-      statusText,
-      turnEndWaitingText,
-      waitingForTurnEnd,
       turnIntro,
-      turnOverlayText,
       currentTurnId,
-      displayedDeclaration,
-      displayedDeclarationLabel,
-      displayedCard,
       hostActionPending,
-      isMyTurn,
-      selectedCard,
-      selectedDeclaration,
-      needsTarget,
-      eligibleDeclarations,
-      canAct,
-      mustDefend,
-      suspicionPasserNames,
-      suspicionWaitingNames,
-      suspicionCardOwnerId,
-      hasPassedSuspicion,
-      hasDefenderCard,
-      hasWizardCard,
-      redirectTargets,
-      turnPreview,
       modalLeaderboard,
       leaderboardLoading: leaderboardQuery.isLoading,
       leaderboardError: leaderboardQuery.error instanceof Error ? leaderboardQuery.error.message : null,
@@ -354,15 +232,15 @@ export function useGameController(): GameControllerResult {
         setSelectedDefenseType,
         setRedirectTargetId,
         setSelectedHandIndex,
-        publish: gameActions.publish,
-        startGame: gameActions.startGame,
-        restartGame: gameActions.restartGame,
-        endGame: gameActions.endGame,
-        submitTurnEnd: gameActions.submitTurnEnd,
-        submitBluff: gameActions.submitBluff,
-        passSuspicion: gameActions.passSuspicion,
-        submitDefense: gameActions.submitDefense,
-        passDefense: gameActions.passDefense,
+        publish: gameActionCommands.publish,
+        startGame: gameActionCommands.startGame,
+        restartGame: gameActionCommands.restartGame,
+        endGame: gameActionCommands.endGame,
+        submitTurnEnd: gameActionCommands.submitTurnEnd,
+        submitBluff: gameActionCommands.submitBluff,
+        passSuspicion: gameActionCommands.passSuspicion,
+        submitDefense: gameActionCommands.submitDefense,
+        passDefense: gameActionCommands.passDefense,
       },
     },
   }

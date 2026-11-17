@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import styled, { keyframes } from 'styled-components'
-import { getCard, getCardLongEffect } from '../../gameUi'
+import { getCard, getCardLongEffect } from '../../utils/cardCatalog'
 
 const tooltipFadeIn = keyframes`
   from { opacity: 0; transform: translateY(0.25rem) scale(0.98); }

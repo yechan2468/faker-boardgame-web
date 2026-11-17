@@ -1,8 +1,8 @@
 import { Brand, MenuButton, TopBar } from '../../gameStyles'
 import type { GameScreenProps } from '../../types'
-import { OpponentArea } from './OpponentArea'
+import { OpponentRoster } from '../players/OpponentRoster'
 
-export function GameHeader({
+export function TopHud({
   onOpenMenu,
   game,
   opponents,
@@ -17,7 +17,7 @@ export function GameHeader({
   return (
     <TopBar>
       <Brand>Faker</Brand>
-      <OpponentArea
+      <OpponentRoster
         game={game}
         opponents={opponents}
         targetId={targetId}

@@ -1,5 +1,3 @@
-import type { PublicPlayer } from '../../types/game'
-
 export type CardInfo = {
   id: string
   ko: string
@@ -66,18 +64,6 @@ export function getCardLongEffect(cardId: string) {
   return CARD_LONG_EFFECTS[cardId] ?? '이 카드의 효과 정보가 없습니다.'
 }
 
-export type DeclarationNotice = {
-  playerId: string
-  declaredCardId: string
-  truthful: boolean | null
-  actualCardId?: string | null
-  targetIds?: string[]
-}
-
 export function getCard(id: string): CardInfo {
   return CARD_INFO.find((card) => card.id === id) ?? { id, ko: id, en: id, target: false, value: 0 }
-}
-
-export function getPlayerName(players: PublicPlayer[], playerId: string) {
-  return players.find((player) => player.id === playerId)?.nickname ?? '플레이어'
 }

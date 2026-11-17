@@ -25,12 +25,13 @@ import {
   VerdictText,
 } from '../../gameStyles'
 import { CardMascot } from '../cards/CardMascot'
-import { getCard, getCardEffectIcons, type DeclarationNotice } from '../../gameUi'
+import { getCard, getCardEffectIcons } from '../../utils/cardCatalog'
+import type { DeclarationNotice } from '../../types'
 import { useGameAudio } from '../../audio/GameAudioProvider'
 import cardBackImage from '../../../../assets/image/card-back.jpg'
 import chestImage from '../../../../assets/image/chest.png'
 
-export function CenterInfoArea({
+export function TableCenterArea({
   game,
   self,
   errorMessage,

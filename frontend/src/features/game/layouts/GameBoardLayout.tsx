@@ -1,7 +1,7 @@
 import { PlayField, Board } from '../gameStyles'
 import type { GameScreenProps } from '../types'
-import { BottomPlayerArea } from '../components/areas/BottomPlayerArea'
-import { CenterInfoArea } from '../components/areas/CenterInfoArea'
+import { BottomHud } from '../components/hud/BottomHud'
+import { TableCenterArea } from '../components/board/TableCenterArea'
 import { GameActionArea } from '../components/actions/GameActionArea'
 import { TurnIntroOverlay } from '../components/overlays/TurnIntroOverlay'
 import { useGameAudio } from '../audio/GameAudioProvider'
@@ -23,9 +23,9 @@ export function GameBoardLayout(props: GameScreenProps) {
             actions.setTargetId(null)
           }}
         >
-          <CenterInfoArea {...props} />
+          <TableCenterArea {...props} />
         </PlayField>
-        <BottomPlayerArea {...props} />
+        <BottomHud {...props} />
       </Board>
       {props.turnIntro && (
         <TurnIntroOverlay

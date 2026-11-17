@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import type { GameState } from '../../../../types/game'
 import { useGameAudio } from '../../audio/GameAudioProvider'
-import { animateHealthChange, findPlayerHealth } from './healthAnimations'
+import { animateHealthChange, findPlayerHealth } from '../../utils/animations/healthAnimations'
 
 type HealthSnapshot = {
   status: GameState['status']

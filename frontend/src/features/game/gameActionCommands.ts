@@ -2,9 +2,10 @@ import { Client, type IMessage } from '@stomp/stompjs'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Dispatch, SetStateAction } from 'react'
 import type { GameState, PublicPlayer } from '../../types/game'
-import { animatePlayedCard } from './components/animations/cardAnimations'
+import { animatePlayedCard } from './utils/animations/cardAnimations'
 import type { GameEffect } from './audio/GameAudioProvider'
-import type { CardInfo, DeclarationNotice } from './gameUi'
+import type { CardInfo } from './utils/cardCatalog'
+import type { DeclarationNotice } from './types'
 
 type GameActionsOptions = {
   game: GameState | undefined
@@ -39,7 +40,7 @@ type GameActionsOptions = {
   }
 }
 
-export function createGameActions({
+export function createGameActionCommands({
   game,
   self,
   clientRef,

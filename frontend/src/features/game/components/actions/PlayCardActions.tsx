@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { GameScreenProps } from '../../types'
-import type { CardInfo } from '../../gameUi'
+import type { CardInfo } from '../../utils/cardCatalog'
 import { ActionButton, ActionChoices, ActionEffectChoice, CardEffectText, Choice, ChoiceTitle, Pill, PillRank, Pills, TruthfulDeclarationButton, TruthfulDeclarationChoice } from '../../gameStyles'
 
 function getDeclaredEffect(card: CardInfo) {

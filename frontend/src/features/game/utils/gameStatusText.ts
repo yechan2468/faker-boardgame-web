@@ -1,6 +1,6 @@
-import type { GameState } from '../../types/game'
-import { getPlayerName } from './gameUi'
-import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice } from './types'
+import type { GameState } from '../../../types/game'
+import { getPlayerName } from './playerNames'
+import type { AlchemistResolutionNotice, AttackResolutionNotice, DefenseOutcomeNotice, DefenseResolutionNotice } from '../types'
 
 type GameStatusTextOptions = {
   game: GameState | undefined

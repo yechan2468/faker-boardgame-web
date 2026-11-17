@@ -1,6 +1,14 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { GameState, LeaderboardEntry, PublicPlayer } from '../../types/game'
-import type { CardInfo, DeclarationNotice } from './gameUi'
+import type { CardInfo } from './utils/cardCatalog'
+
+export type DeclarationNotice = {
+  playerId: string
+  declaredCardId: string
+  truthful: boolean | null
+  actualCardId?: string | null
+  targetIds?: string[]
+}
 
 export type AttackResolutionNotice = {
   actorId: string

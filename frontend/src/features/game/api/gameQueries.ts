@@ -1,4 +1,4 @@
-import type { GameState, LeaderboardEntry } from '../../types/game'
+import type { GameState, LeaderboardEntry } from '../../../types/game'
 
 export async function fetchGameState(): Promise<GameState> {
   const response = await fetch('/api/game', { credentials: 'same-origin', headers: { Accept: 'application/json' } })

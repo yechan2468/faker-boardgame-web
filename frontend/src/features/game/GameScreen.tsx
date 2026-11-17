@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Page } from './gameStyles'
 import type { GameScreenProps } from './types'
-import { GameHeader } from './components/areas/GameHeader'
+import { TopHud } from './components/hud/TopHud'
 import { FloatingRulesImage } from './components/overlays/FloatingRulesImage'
 import { CardEffectTooltip } from './components/cards/CardEffectTooltip'
 import { HealthChangeAnimator } from './components/animations/HealthChangeAnimator'
@@ -22,7 +22,7 @@ export default function GameScreen(props: GameScreenProps) {
   return (
     <Page data-player-shadow-layer="true" onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()}>
       <HealthChangeAnimator game={props.game} />
-      <GameHeader {...props} onOpenMenu={() => actions.setModalOpen(true)} />
+      <TopHud {...props} onOpenMenu={() => actions.setModalOpen(true)} />
       <GameBoardLayout {...props} />
       <FloatingRulesImage />
       <CardEffectTooltip />
