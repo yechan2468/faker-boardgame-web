@@ -847,6 +847,7 @@ export const PlayerCardBack = styled.img<{ $index: number; $count: number; $oppo
   }};
   left: ${({ $opponent, $index, $count }) => {
     if (!$opponent) return 'auto'
+    if ($count === 2) return $index === 0 ? '42%' : '58%'
     return $count === 1 ? '50%' : `${($index / ($count - 1)) * 100}%`
   }};
   flex: 0 0 auto;
@@ -861,7 +862,7 @@ export const PlayerCardBack = styled.img<{ $index: number; $count: number; $oppo
   filter: ${({ $opponent }) => ($opponent ? 'brightness(0.7) drop-shadow(0 3px 5px rgb(0 0 0 / 42%))' : 'none')};
   transform: ${({ $index, $count, $opponent }) => {
     const distanceFromCenter = $index - (($count - 1) / 2)
-    const horizontalAnchor = $count === 1 || ($index > 0 && $index < $count - 1)
+    const horizontalAnchor = $count === 1 || ($opponent && $count === 2) || ($index > 0 && $index < $count - 1)
       ? '-50%'
       : $index === 0 ? '0%' : '-100%'
     const positionX = $opponent ? `translateX(${horizontalAnchor}) ` : ''

@@ -158,7 +158,7 @@ export function BottomPlayerArea({ game, self, hand, selectedHandIndex, turnPrev
             opacity: 1,
           },
         ],
-        { duration: 800, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'forwards' },
+        { duration: 2400, easing: 'cubic-bezier(0.22, 0.72, 0.12, 1)', fill: 'forwards' },
       )
       animation.onfinish = clearDragPreview
       animation.oncancel = clearDragPreview
